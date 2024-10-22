@@ -1,0 +1,46 @@
+package NetworkApplicationsProject.Models;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Entity
+@Setter
+@Getter
+public class FileModel {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    private String filePath;
+
+    private String contentType;
+
+    private Boolean isAvailable;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime createdAt;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime deletedAt;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime lastModifiedAt;
+
+    @OneToMany(mappedBy = "fileModel", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ActivityModel> activityModels;
+
+    @ManyToOne
+    @JoinColumn(name = "ownerId")
+    private UserModel fileOwner;
+
+    @ManyToOne
+    @JoinColumn(name = "groupId")
+    private GroupModel groupModel;
+
+}
