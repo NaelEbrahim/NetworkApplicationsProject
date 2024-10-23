@@ -101,4 +101,19 @@ public class UserService {
     }
 
 
+    public Object profile() {
+       return HandleCurrentUserSession.getCurrentUser();
+    }
+
+    public Object edit(String firstName, String lastName, String userName) {
+        UserModel user = HandleCurrentUserSession.getCurrentUser();
+        if(!firstName.isEmpty()  || !lastName.isEmpty() || !userName.isEmpty()) {
+            user.setFirstName(firstName);
+            user.setLastName(lastName);
+            user.setUserName(userName);
+            userRepository.save(user);
+        }
+
+        return user;
+    }
 }
