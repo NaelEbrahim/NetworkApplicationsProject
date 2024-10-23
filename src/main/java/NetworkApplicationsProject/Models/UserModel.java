@@ -34,6 +34,7 @@ public class UserModel {
     @Column(nullable = false)
     private GenderEnum gender;
 
+    @JsonIgnore
     @Column(nullable = false)
     private String password;
 

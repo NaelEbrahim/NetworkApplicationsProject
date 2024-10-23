@@ -20,6 +20,8 @@ public class GroupModel {
 
     private String name;
 
+    private String type;
+
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
 
