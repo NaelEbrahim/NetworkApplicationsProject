@@ -16,36 +16,36 @@ public class GroupsController {
     GroupService groupService;
 
     @PostMapping("/createGroup")
-    public ResponseEntity<?> createGroup(@Param("groupName") String groupName ,@Param("groupType") String groupType) {
+    public ResponseEntity<?> createGroup(@Param("groupName") String groupName, @Param("groupType") String groupType) {
         try {
-            return new ResponseEntity<>(groupService.createGroup(groupName , groupType), HttpStatus.CREATED);
+            return new ResponseEntity<>(groupService.createGroup(groupName, groupType), HttpStatus.CREATED);
         } catch (CustomException exception) {
             return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
         }
     }
 
     @PostMapping("/updateGroup/{groupId}")
-    public ResponseEntity<?> updateGroup(@Param("groupName") String groupName ,@Param("groupType") String groupType , @PathVariable int groupId) {
+    public ResponseEntity<?> updateGroup(@Param("groupName") String groupName, @Param("groupType") String groupType, @PathVariable int groupId) {
         try {
-            return new ResponseEntity<>(groupService.updateGroup(groupName,groupType,groupId), HttpStatus.OK);
+            return new ResponseEntity<>(groupService.updateGroup(groupName, groupType, groupId), HttpStatus.OK);
         } catch (CustomException exception) {
             return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
         }
     }
 
-    @DeleteMapping("/deleteGroup/{groupId}")
-    public ResponseEntity<?> deleteGroup(@PathVariable int groupId) {
+    @DeleteMapping("/deleteGroup")
+    public ResponseEntity<?> deleteGroup(@Param("groupName") String groupName) {
         try {
-            return new ResponseEntity<>(groupService.deleteGroup(groupId), HttpStatus.OK);
+            return new ResponseEntity<>(groupService.deleteGroup(groupName), HttpStatus.OK);
         } catch (CustomException exception) {
             return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
         }
     }
 
     @PostMapping("/addUser/{groupId}")
-    public ResponseEntity<?> addUser(@Param("userName_email") String userName_email ,@PathVariable int groupId ) {
+    public ResponseEntity<?> addUser(@Param("userName_email") String userName_email, @PathVariable int groupId) {
         try {
-            return new ResponseEntity<>(groupService.addUser(userName_email , groupId), HttpStatus.OK);
+            return new ResponseEntity<>(groupService.addUser(userName_email, groupId), HttpStatus.OK);
         } catch (CustomException exception) {
             return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
         }
