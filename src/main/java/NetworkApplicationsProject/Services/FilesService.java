@@ -79,7 +79,7 @@ public class FilesService {
             if (userRole.equals(RolesEnum.SUPER_ADMIN) || HandleCurrentUserSession.getCurrentUser().getId().equals(targetGroup.get().getGroupOwner().getId())) {
                 return fileRepository.findByGroupId(targetGroup.get().getId());
             } else {
-                throw new CustomException("you don't have permission to access to this files", HttpStatus.UNAUTHORIZED);
+                throw new CustomException("you don't have permissions to access to this files", HttpStatus.UNAUTHORIZED);
             }
         } else {
             throw new CustomException("group with this id not found", HttpStatus.NOT_FOUND);
