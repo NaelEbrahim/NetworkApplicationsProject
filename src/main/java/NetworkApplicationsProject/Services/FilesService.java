@@ -1,8 +1,8 @@
 package NetworkApplicationsProject.Services;
 
-
 import NetworkApplicationsProject.CustomExceptions.CustomException;
 import NetworkApplicationsProject.DTO.Requset.FileRequest;
+import NetworkApplicationsProject.Enums.RolesEnum;
 import NetworkApplicationsProject.Models.FileModel;
 import NetworkApplicationsProject.Models.GroupModel;
 import NetworkApplicationsProject.Repositories.FileRepository;
@@ -42,7 +42,7 @@ public class FilesService {
                 FileModel newFile = new FileModel();
                 newFile.setIsAvailable(true);
                 newFile.setFilePath(filepath);
-                newFile.setGroupModel(targetGroup.get());
+                newFile.setGroup(targetGroup.get());
                 newFile.setCreatedAt(LocalDateTime.now());
                 newFile.setLastModifiedAt(LocalDateTime.now());
                 newFile.setContentType(fileRequest.getContentType());
@@ -58,8 +58,8 @@ public class FilesService {
         return "file Added Successfully";
     }
 
-    public String deleteFile(FileRequest fileRequest) {
-        Optional<FileModel> targetFile = fileRepository.findById(fileRequest.getFileId());
+    public String deleteFile(Integer fileId) {
+        Optional<FileModel> targetFile = fileRepository.findById(fileId);
         if (targetFile.isPresent()) {
             if (HandleCurrentUserSession.getCurrentUser().getId().equals(targetFile.get().getFileOwner().getId())) {
                 fileRepository.delete(targetFile.get());
@@ -69,6 +69,20 @@ public class FilesService {
             }
         } else {
             throw new CustomException("file with this id not found", HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    public List<FileModel> getFiles(Integer groupId) {
+        Optional<GroupModel> targetGroup = groupRepository.findById(groupId);
+        if (targetGroup.isPresent()) {
+            RolesEnum userRole = HandleCurrentUserSession.getCurrentUserRole();
+            if (userRole.equals(RolesEnum.SUPER_ADMIN) || HandleCurrentUserSession.getCurrentUser().getId().equals(targetGroup.get().getGroupOwner().getId())) {
+                return fileRepository.findByGroupId(targetGroup.get().getId());
+            } else {
+                throw new CustomException("you don't have permission to access to this files", HttpStatus.UNAUTHORIZED);
+            }
+        } else {
+            throw new CustomException("group with this id not found", HttpStatus.NOT_FOUND);
         }
     }
 

@@ -3,6 +3,7 @@ package NetworkApplicationsProject.Services;
 import NetworkApplicationsProject.CustomExceptions.CustomException;
 import NetworkApplicationsProject.DTO.Requset.AuthRequest;
 import NetworkApplicationsProject.DTO.Response.AuthResponse;
+import NetworkApplicationsProject.Enums.RolesEnum;
 import NetworkApplicationsProject.Models.UserModel;
 import NetworkApplicationsProject.Repositories.TokenRepository;
 import NetworkApplicationsProject.Repositories.UserRepository;
@@ -54,6 +55,7 @@ public class UserService {
             userModel.setGender(authRequest.getGender());
             userModel.setCreatedAt(LocalDateTime.now());
             userModel.setLastModified(LocalDateTime.now());
+            userModel.setRole(RolesEnum.USER);
             userModel.setPassword(encryptionService.encryptPassword(authRequest.getPassword()));
             // Save New User In DataBase
             UserModel savedUser = userRepository.save(userModel);

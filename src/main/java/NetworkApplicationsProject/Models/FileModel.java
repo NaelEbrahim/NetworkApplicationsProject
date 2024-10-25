@@ -1,6 +1,7 @@
 package NetworkApplicationsProject.Models;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,15 +33,17 @@ public class FileModel {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime lastModifiedAt;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "fileModel", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ActivityModel> activityModels;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ownerId")
     private UserModel fileOwner;
 
-    @ManyToOne
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "groupId")
-    private GroupModel groupModel;
+    private GroupModel group;
 
 }

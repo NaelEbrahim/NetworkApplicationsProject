@@ -16,7 +16,7 @@ public class TokenModel {
     private String token;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "userId")
     private UserModel user;
 
 }

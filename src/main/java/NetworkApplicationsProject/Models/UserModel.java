@@ -1,8 +1,10 @@
 package NetworkApplicationsProject.Models;
 
 import NetworkApplicationsProject.Enums.GenderEnum;
+import NetworkApplicationsProject.Enums.RolesEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,6 +15,7 @@ import java.util.List;
 @Entity
 @Setter
 @Getter
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class UserModel {
 
     @Id
@@ -34,8 +37,12 @@ public class UserModel {
     @Column(nullable = false)
     private GenderEnum gender;
 
+    @JsonIgnore
     @Column(nullable = false)
     private String password;
+
+    @Column(nullable = false)
+    private RolesEnum role;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
@@ -60,12 +67,7 @@ public class UserModel {
     private List<FileModel> userFiles;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TokenModel> tokenModel;
-
-    @JsonIgnore
-    @ManyToOne
-    @JoinColumn(name = "roleId")
-    private RoleModel roleModel;
 
 }

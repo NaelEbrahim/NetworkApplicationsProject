@@ -22,7 +22,7 @@ public class TokenService {
     }
 
     public void revokeOldUserTokens(UserModel user) {
-        List<TokenModel> validUserTokens = tokenRepository.findByUser_Id(user.getId());
+        List<TokenModel> validUserTokens = tokenRepository.findByUserId(user.getId());
         if (!validUserTokens.isEmpty()) {
             validUserTokens.forEach(tokenRepository::delete);
         }

@@ -24,14 +24,14 @@ public class GroupModel {
     private LocalDateTime createdAt;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "groupModel", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FileModel> groupFiles;
 
     @JsonIgnore
     @OneToMany(mappedBy = "groupModel", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<GroupUserModel> groupUserModels;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ownerId")
     private UserModel groupOwner;
 

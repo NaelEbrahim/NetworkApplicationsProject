@@ -1,7 +1,7 @@
 package NetworkApplicationsProject.Enums;
 
 public enum RolesEnum {
-    USER,
-
-    OWNER
+    SUPER_ADMIN,
+    ADMIN,
+    USER
 }
