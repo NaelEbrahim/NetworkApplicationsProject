@@ -22,7 +22,7 @@ public class AuthController {
 
     @Autowired
     private UserService userService;
-
+//WTFffffffff
     @PostMapping("/register")
     public ResponseEntity<?> userRegister(@ModelAttribute @Valid AuthRequest authRequest) {
         try {
