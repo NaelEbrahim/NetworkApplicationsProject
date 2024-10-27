@@ -25,10 +25,10 @@ public class GroupsController {
         }
     }
 
-    @PostMapping("/updateGroup/{groupId}")
-    public ResponseEntity<?> updateGroup(@Param("groupName") String groupName, @Param("groupType") String groupType, @PathVariable int groupId) {
+    @PostMapping("/updateGroup")
+    public ResponseEntity<?> updateGroup(@ModelAttribute GroupRequest groupRequest) {
         try {
-            return new ResponseEntity<>(groupService.updateGroup(groupName, groupType, groupId), HttpStatus.OK);
+            return new ResponseEntity<>(groupService.updateGroup(groupRequest), HttpStatus.OK);
         } catch (CustomException exception) {
             return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
         }
@@ -51,5 +51,24 @@ public class GroupsController {
             return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
         }
     }
+    @PostMapping("/removeUser")
+    public ResponseEntity<?> removeUser(@ModelAttribute GroupRequest groupRequest) {
+        try {
+            return new ResponseEntity<>(groupService.removeUserFromGroup(groupRequest), HttpStatus.OK);
+        } catch (CustomException exception) {
+            return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
+        }
+    }
+
+    @GetMapping("/{groupId}/details")
+    public ResponseEntity<?> getGroupDetailsWithMembers(
+            @PathVariable int groupId) { // Get the email of the requesting user from the request or session
+        try {
+            return new ResponseEntity<>(groupService.getGroupWithMembers(groupId), HttpStatus.OK);
+        } catch (CustomException exception) {
+            return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
+        }
+    }
+
 
 }

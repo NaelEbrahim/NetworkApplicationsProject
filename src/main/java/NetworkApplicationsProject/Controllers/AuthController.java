@@ -2,12 +2,14 @@ package NetworkApplicationsProject.Controllers;
 
 import NetworkApplicationsProject.CustomExceptions.CustomException;
 import NetworkApplicationsProject.DTO.Requset.AuthRequest;
+import NetworkApplicationsProject.DTO.Requset.ProfileRequest;
 import NetworkApplicationsProject.Models.UserModel;
 import NetworkApplicationsProject.Services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +30,7 @@ public class AuthController {
         } catch (CustomException exception) {
             return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
         }
-    }//hiii
+    }
 
     @PostMapping("/login")
     public ResponseEntity<?> userLogin(@ModelAttribute @Valid AuthRequest authRequest) {
@@ -54,9 +56,9 @@ public class AuthController {
     }
 
     @PostMapping("/edit/profile")
-    public ResponseEntity<?> editProfile(@Param("firstName") String firstName, @Param("lastName") String lastName, @Param("userName") String userName) {
+    public ResponseEntity<?> editProfile(ProfileRequest profile) {
         try {
-            return new ResponseEntity<>(userService.edit(firstName,lastName,userName), HttpStatus.CREATED);
+            return new ResponseEntity<>(userService.edit(profile), HttpStatus.CREATED);
         } catch (CustomException exception) {
             return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
         }
