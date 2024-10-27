@@ -1,6 +1,7 @@
 package NetworkApplicationsProject.Controllers;
 
 import NetworkApplicationsProject.CustomExceptions.CustomException;
+import NetworkApplicationsProject.DTO.Requset.GroupRequest;
 import NetworkApplicationsProject.Services.GroupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.query.Param;
@@ -16,9 +17,9 @@ public class GroupsController {
     GroupService groupService;
 
     @PostMapping("/createGroup")
-    public ResponseEntity<?> createGroup(@Param("groupName") String groupName, @Param("groupType") String groupType) {
+    public ResponseEntity<?> createGroup(@ModelAttribute GroupRequest groupRequest) {
         try {
-            return new ResponseEntity<>(groupService.createGroup(groupName, groupType), HttpStatus.CREATED);
+            return new ResponseEntity<>(groupService.createGroup(groupRequest), HttpStatus.CREATED);
         } catch (CustomException exception) {
             return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
         }
@@ -42,10 +43,10 @@ public class GroupsController {
         }
     }
 
-    @PostMapping("/addUser/{groupId}")
-    public ResponseEntity<?> addUser(@Param("userName_email") String userName_email, @PathVariable int groupId) {
+    @PostMapping("/addUser")
+    public ResponseEntity<?> addUser(@ModelAttribute GroupRequest groupRequest) {
         try {
-            return new ResponseEntity<>(groupService.addUser(userName_email, groupId), HttpStatus.OK);
+            return new ResponseEntity<>(groupService.addUserToGroup(groupRequest), HttpStatus.OK);
         } catch (CustomException exception) {
             return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
         }

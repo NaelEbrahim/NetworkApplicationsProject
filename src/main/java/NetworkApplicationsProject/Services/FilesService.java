@@ -76,7 +76,10 @@ public class FilesService {
         Optional<GroupModel> targetGroup = groupRepository.findById(groupId);
         if (targetGroup.isPresent()) {
             RolesEnum userRole = HandleCurrentUserSession.getCurrentUserRole();
-            if (userRole.equals(RolesEnum.SUPER_ADMIN) || HandleCurrentUserSession.getCurrentUser().getId().equals(targetGroup.get().getGroupOwner().getId())) {
+            if (userRole.equals(RolesEnum.SUPER_ADMIN)
+                    || HandleCurrentUserSession.getCurrentUser().getId().equals(targetGroup.get().getGroupOwner().getId())
+                    
+            ) {
                 return fileRepository.findByGroupId(targetGroup.get().getId());
             } else {
                 throw new CustomException("you don't have permissions to access to this files", HttpStatus.UNAUTHORIZED);
