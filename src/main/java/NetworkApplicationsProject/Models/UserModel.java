@@ -51,7 +51,7 @@ public class UserModel {
     private LocalDateTime lastModified;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "userModel", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<GroupUserModel> userGroups;
 
     @JsonIgnore

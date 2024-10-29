@@ -18,11 +18,16 @@ public class FileModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    private String fileName;
+
     private String filePath;
 
     private String contentType;
 
     private Boolean isAvailable;
+
+    @Version
+    private int version;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;

@@ -84,7 +84,7 @@ public class GroupService {
             if (targetUser.isPresent()) {
                 // Create New Object % initialize it
                 GroupUserModel groupUserModel = new GroupUserModel();
-                groupUserModel.setUserModel(targetUser.get());
+                groupUserModel.setUser(targetUser.get());
                 groupUserModel.setGroupModel(targetGroup.get());
                 groupUserModel.setJoinDate(LocalDateTime.now());
                 // Save In DataBase

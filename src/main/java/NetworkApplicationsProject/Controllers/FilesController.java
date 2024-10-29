@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+
 @RestController
 @RequestMapping("api/files")
 public class FilesController {
@@ -40,6 +41,24 @@ public class FilesController {
             return new ResponseEntity<>(filesService.getFiles(groupId), HttpStatus.OK);
         } catch (CustomException exception) {
             return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
+        }
+    }
+
+    @PostMapping("/checkInFiles")
+    public ResponseEntity<?> checkInFiles(@ModelAttribute FileRequest fileRequest) {
+        try {
+            return new ResponseEntity<>(filesService.checkInFilesOptimistically(fileRequest), HttpStatus.OK);
+        } catch (Exception exception) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(exception.getMessage());
+        }
+    }
+
+    @PostMapping("/checkOutFiles")
+    public ResponseEntity<?> checkOutFiles(@ModelAttribute FileRequest fileRequest) {
+        try {
+            return new ResponseEntity<>(filesService.checkOutFilesOptimistically(fileRequest), HttpStatus.OK);
+        } catch (Exception exception) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(exception.getMessage());
         }
     }
 
