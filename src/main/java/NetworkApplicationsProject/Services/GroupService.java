@@ -107,7 +107,7 @@ public class GroupService {
         }
 
         // Check if the user already exists in the group
-        List<GroupUserModel> existingGroupUsers = groupUserRepository.findByUserModelAndGroupModel(targetUser.get(), targetGroup.get());
+        List<GroupUserModel> existingGroupUsers = groupUserRepository.findByUserAndGroupModel(targetUser.get(), targetGroup.get());
 
         if (!existingGroupUsers.isEmpty()) {
             throw new CustomException("User already exists in the group", HttpStatus.CONFLICT);
@@ -115,7 +115,7 @@ public class GroupService {
 
         // Create new GroupUserModel and save it
         GroupUserModel groupUserModel = new GroupUserModel();
-        groupUserModel.setUserModel(targetUser.get());
+        groupUserModel.setUser(targetUser.get());
         groupUserModel.setGroupModel(targetGroup.get());
         groupUserModel.setJoinDate(LocalDateTime.now());
         groupUserRepository.save(groupUserModel);
@@ -144,7 +144,7 @@ public class GroupService {
         }
 
         // Check if the user exists in the group
-        List<GroupUserModel> existingGroupUser = groupUserRepository.findByUserModelAndGroupModel(targetUser.get(), targetGroup.get());
+        List<GroupUserModel> existingGroupUser = groupUserRepository.findByUserAndGroupModel(targetUser.get(), targetGroup.get());
         if (existingGroupUser.isEmpty()) {
             throw new CustomException("User is not a member of this group", HttpStatus.NOT_FOUND);
         }
@@ -154,7 +154,6 @@ public class GroupService {
 
         return "User removed successfully from the group";
     }
-
 
     public GroupResponse getGroupWithMembers(int groupId) {
         GroupModel group = groupRepository.findById(groupId)
@@ -168,7 +167,7 @@ public class GroupService {
         }
 
         List<UserModel> members = groupUserRepository.findByGroupModel(group).stream()
-                .map(GroupUserModel::getUserModel) // Map GroupUserModel to UserModel
+                .map(GroupUserModel::getUser) // Map GroupUserModel to UserModel
                 .collect(Collectors.toList());
 
         GroupResponse groupResponse = new GroupResponse();
