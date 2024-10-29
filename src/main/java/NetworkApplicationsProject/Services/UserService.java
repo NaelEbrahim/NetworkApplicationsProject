@@ -2,6 +2,7 @@ package NetworkApplicationsProject.Services;
 
 import NetworkApplicationsProject.CustomExceptions.CustomException;
 import NetworkApplicationsProject.DTO.Requset.AuthRequest;
+import NetworkApplicationsProject.DTO.Requset.ProfileRequest;
 import NetworkApplicationsProject.DTO.Response.AuthResponse;
 import NetworkApplicationsProject.Enums.RolesEnum;
 import NetworkApplicationsProject.Models.UserModel;
@@ -107,15 +108,21 @@ public class UserService {
        return HandleCurrentUserSession.getCurrentUser();
     }
 
-    public Object edit(String firstName, String lastName, String userName) {
+    public Object edit(ProfileRequest profileRequest) {
         UserModel user = HandleCurrentUserSession.getCurrentUser();
-        if(!firstName.isEmpty()  || !lastName.isEmpty() || !userName.isEmpty()) {
-            user.setFirstName(firstName);
-            user.setLastName(lastName);
-            user.setUserName(userName);
+        if(!profileRequest.getFirstName().isEmpty()) {
+            user.setFirstName(profileRequest.getFirstName());
+            user.setUserName(profileRequest.getUsername());
             userRepository.save(user);
         }
-
+        if(!profileRequest.getLastName().isEmpty() ){
+            user.setLastName(profileRequest.getLastName());
+            userRepository.save(user);
+        }
+        if(!profileRequest.getUsername().isEmpty()){
+            user.setUserName(profileRequest.getUsername());
+            userRepository.save(user);
+        }
         return user;
     }
 }
