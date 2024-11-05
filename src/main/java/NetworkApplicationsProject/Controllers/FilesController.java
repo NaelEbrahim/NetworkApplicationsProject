@@ -3,6 +3,7 @@ package NetworkApplicationsProject.Controllers;
 import NetworkApplicationsProject.CustomExceptions.CustomException;
 import NetworkApplicationsProject.DTO.Requset.FileRequest;
 import NetworkApplicationsProject.Services.FilesService;
+import NetworkApplicationsProject.Testing.FileServiceTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,9 @@ public class FilesController {
 
     @Autowired
     FilesService filesService;
+
+    @Autowired
+    FileServiceTest fileServiceTest;
 
     @PostMapping("/addFile")
     public ResponseEntity<?> addFile(@ModelAttribute FileRequest fileData) {
@@ -48,6 +52,8 @@ public class FilesController {
     public ResponseEntity<?> checkInFiles(@ModelAttribute FileRequest fileRequest) {
         try {
             return new ResponseEntity<>(filesService.checkInFilesOptimistically(fileRequest), HttpStatus.OK);
+        } catch (CustomException exception) {
+            return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
         } catch (Exception exception) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(exception.getMessage());
         }
@@ -57,6 +63,8 @@ public class FilesController {
     public ResponseEntity<?> checkOutFiles(@ModelAttribute FileRequest fileRequest) {
         try {
             return new ResponseEntity<>(filesService.checkOutFilesOptimistically(fileRequest), HttpStatus.OK);
+        } catch (CustomException exception) {
+            return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
         } catch (Exception exception) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(exception.getMessage());
         }

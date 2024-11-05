@@ -12,15 +12,18 @@ import NetworkApplicationsProject.Repositories.GroupRepository;
 import NetworkApplicationsProject.Repositories.GroupUserRepository;
 import NetworkApplicationsProject.Tools.FilesManagement;
 import NetworkApplicationsProject.Tools.HandleCurrentUserSession;
-import org.apache.coyote.http11.filters.IdentityOutputFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -88,7 +91,7 @@ public class FilesService {
             UserModel currentUser = HandleCurrentUserSession.getCurrentUser();
             if (currentUser.getRole().equals(RolesEnum.SUPER_ADMIN)
                     || currentUser.getId().equals(targetGroup.get().getGroupOwner().getId())
-                    || checkIsUserInGroup(targetGroup.get().getId())
+                    || checkIsUserInGroup(targetGroup.get())
             ) {
                 return fileRepository.findByGroupId(targetGroup.get().getId());
             } else {
@@ -104,14 +107,19 @@ public class FilesService {
         Optional<GroupModel> targetGroup = groupRepository.findById(fileRequest.getGroupId());
         if (targetGroup.isPresent()) {
             if (HandleCurrentUserSession.getCurrentUser().getId().equals(targetGroup.get().getGroupOwner().getId())
-                    || checkIsUserInGroup(targetGroup.get().getId())
+                    || checkIsUserInGroup(targetGroup.get())
             ) {
                 List<FileModel> files = fileRepository.findAllById(fileRequest.getFileIds());
-                // Check that all files are available
-                for (FileModel file : files) {
-                    if (!file.getIsAvailable()) {
-                        throw new IllegalStateException("One or more files are already reserved.");
+                // Check if all files are exist
+                if (files.size() == fileRequest.getFileIds().size()) {
+                    for (FileModel file : files) {
+                        // Check that all files are available
+                        if (!file.getIsAvailable()) {
+                            throw new CustomException("One or more files are already reserved.", HttpStatus.BAD_REQUEST);
+                        }
                     }
+                } else {
+                    throw new CustomException("one or more entered files Ids Not Found", HttpStatus.NOT_FOUND);
                 }
                 // Reserve files
                 files.forEach(file -> file.setIsAvailable(false));
@@ -126,13 +134,11 @@ public class FilesService {
         }
     }
 
-    private boolean checkIsUserInGroup(int groupId) {
-        //find target Group
-        Optional<GroupModel> targetGroup = groupRepository.findById(groupId);
-        //find Group For target User
+    private boolean checkIsUserInGroup(GroupModel targetGroup) {
+        //find Groups For target User
         List<GroupUserModel> currentUserGroups = groupUserRepository.findByUserId(HandleCurrentUserSession.getCurrentUser().getId());
         for (GroupUserModel element : currentUserGroups) {
-            if (element.getGroupModel().getId().equals(targetGroup.get().getId())) {
+            if (element.getGroupModel().getId().equals(targetGroup.getId())) {
                 return true;
             }
         }
@@ -140,48 +146,62 @@ public class FilesService {
     }
 
     @Transactional
-    public String checkOutFilesOptimistically(FileRequest fileRequest) {
+    public String checkOutFilesOptimistically(FileRequest fileRequest) throws IOException, NoSuchAlgorithmException {
         Optional<GroupModel> targetGroup = groupRepository.findById(fileRequest.getGroupId());
         if (targetGroup.isPresent()) {
             if (HandleCurrentUserSession.getCurrentUser().getId().equals(targetGroup.get().getGroupOwner().getId())
-                    || checkIsUserInGroup(targetGroup.get().getId())
+                    || checkIsUserInGroup(targetGroup.get())
             ) {
                 List<FileModel> files = fileRepository.findAllById(fileRequest.getFileIds());
-                // Check that all files are booked
-                for (FileModel file : files) {
-                    if (file.getIsAvailable()) {
-                        throw new IllegalStateException("One or more files is not booked Yet.");
+                // Check if all files are exist
+                if (files.size() == fileRequest.getFileIds().size()) {
+                    for (FileModel file : files) {
+                        // Check if all files are booked
+                        if (file.getIsAvailable()) {
+                            throw new CustomException("One or more files is not booked Yet.", HttpStatus.BAD_REQUEST);
+                        }
                     }
+                } else {
+                    throw new CustomException("one or more entered files Ids Not Found", HttpStatus.NOT_FOUND);
                 }
                 if (fileRequest.getUpdatedFiles() != null && !fileRequest.getUpdatedFiles().isEmpty()) {
-                    // Upload Files To Server
-                    List<String> filesPath = FilesManagement.uploadMultipleFile(fileRequest.getUpdatedFiles());
-                    if (filesPath == null || filesPath.isEmpty()) {
-                        throw new CustomException("something went wrong when store files", HttpStatus.INTERNAL_SERVER_ERROR);
+                    for (MultipartFile element : fileRequest.getUpdatedFiles()) {
+                        FileModel currentFile = findElementInList(files, element);
+                        if (currentFile != null && !FilesManagement.areFilesIdentical(currentFile.getFilePath(), element)) {
+                            // Upload File To Server if File Changed
+                            File updatedFile = FilesManagement.uploadSingleFile(element);
+                            if (updatedFile == null) {
+                                throw new CustomException("something went wrong when store files", HttpStatus.INTERNAL_SERVER_ERROR);
+                            }
+                            // Set new Info
+                            currentFile.setRealVersion(currentFile.getRealVersion() + 1);
+                            currentFile.setFilePath(updatedFile.getAbsolutePath());
+                            currentFile.setLastModifiedAt(LocalDateTime.now());
+                        }
+                        // Release file
+                        Objects.requireNonNull(currentFile).setIsAvailable(true);
                     }
+                    // Save all to trigger optimistic locking
+                    fileRepository.saveAll(files);
+                    return "files Checked-Out Successfully";
                 } else {
                     throw new CustomException("please upload valid files", HttpStatus.BAD_REQUEST);
                 }
-                // Release files & Set new Info
-                files.forEach(file -> {
-                    String oldFileName = file.getFileName();
-                    if (oldFileName.contains("-Version")) {
-                        file.setFileName(oldFileName.substring(0, oldFileName.indexOf("-Version/")) + "-Version/" + (file.getVersion() + 1) / 2 + "/");
-                    } else {
-                        file.setFileName(file.getFileName() + "-Version/" + file.getVersion() + "/");
-                    }
-                    file.setLastModifiedAt(LocalDateTime.now());
-                    file.setIsAvailable(true);
-                });
-                // Save all to trigger optimistic locking
-                fileRepository.saveAll(files);
-                return "files Checked-Out Successfully";
             } else {
                 throw new CustomException("you must be Owner or member in group", HttpStatus.UNAUTHORIZED);
             }
         } else {
             throw new CustomException("group with this id not found", HttpStatus.NOT_FOUND);
         }
+    }
+
+    private FileModel findElementInList(List<FileModel> files, MultipartFile targetFile) {
+        for (FileModel element : files) {
+            if (element.getFileName().equals(targetFile.getOriginalFilename())) {
+                return element;
+            }
+        }
+        return null;
     }
 
 }

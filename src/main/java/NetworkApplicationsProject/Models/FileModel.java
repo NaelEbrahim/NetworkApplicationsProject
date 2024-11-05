@@ -26,6 +26,8 @@ public class FileModel {
 
     private Boolean isAvailable;
 
+    private int realVersion;
+
     @Version
     private int version;
 
