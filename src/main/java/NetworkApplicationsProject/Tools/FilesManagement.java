@@ -104,7 +104,7 @@ public class FilesManagement {
     private static String getFileChecksum(MultipartFile multipartFile) throws IOException, NoSuchAlgorithmException {
         // Check if the MultipartFile is not null and not empty
         if (multipartFile == null || multipartFile.isEmpty()) {
-            throw new IllegalArgumentException("MultipartFile must not be null or empty.");
+            throw new IllegalArgumentException("MultipartFile must not be null or empty");
         }
 
         // Create a MessageDigest instance for SHA-256
