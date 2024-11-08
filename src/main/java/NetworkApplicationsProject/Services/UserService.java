@@ -1,7 +1,8 @@
 package NetworkApplicationsProject.Services;
 
 import NetworkApplicationsProject.CustomExceptions.CustomException;
-import NetworkApplicationsProject.DTO.Requset.AuthRequest;
+import NetworkApplicationsProject.DTO.Requset.AuthRequests.LoginRequest;
+import NetworkApplicationsProject.DTO.Requset.AuthRequests.RegisterRequest;
 import NetworkApplicationsProject.DTO.Requset.ProfileRequest;
 import NetworkApplicationsProject.DTO.Response.AuthResponse;
 import NetworkApplicationsProject.Enums.RolesEnum;
@@ -41,7 +42,7 @@ public class UserService {
     private EncryptionService encryptionService;
 
 
-    public AuthResponse register(AuthRequest authRequest) {
+    public AuthResponse register(RegisterRequest authRequest) {
         if (userRepository.findByEmail(authRequest.getEmail()).isPresent()) {
             throw new CustomException("email already used", HttpStatus.CONFLICT);
         } else if (userRepository.findByUserName(authRequest.getUserName()).isPresent()) {
@@ -71,7 +72,7 @@ public class UserService {
         }
     }
 
-    public AuthResponse login(AuthRequest authRequest) {
+    public AuthResponse login(LoginRequest authRequest) {
         Optional<UserModel> currentUser = userRepository.findByEmail(authRequest.getEmail());
         if (currentUser.isPresent()) {
             UserModel user = currentUser.get();
@@ -105,21 +106,21 @@ public class UserService {
 
 
     public Object profile() {
-       return HandleCurrentUserSession.getCurrentUser();
+        return HandleCurrentUserSession.getCurrentUser();
     }
 
     public Object edit(ProfileRequest profileRequest) {
         UserModel user = HandleCurrentUserSession.getCurrentUser();
-        if(!profileRequest.getFirstName().isEmpty()) {
+        if (!profileRequest.getFirstName().isEmpty()) {
             user.setFirstName(profileRequest.getFirstName());
             user.setUserName(profileRequest.getUsername());
             userRepository.save(user);
         }
-        if(!profileRequest.getLastName().isEmpty() ){
+        if (!profileRequest.getLastName().isEmpty()) {
             user.setLastName(profileRequest.getLastName());
             userRepository.save(user);
         }
-        if(!profileRequest.getUsername().isEmpty()){
+        if (!profileRequest.getUsername().isEmpty()) {
             user.setUserName(profileRequest.getUsername());
             userRepository.save(user);
         }

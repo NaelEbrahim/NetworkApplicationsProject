@@ -1,9 +1,10 @@
 package NetworkApplicationsProject.Controllers;
 
 import NetworkApplicationsProject.CustomExceptions.CustomException;
-import NetworkApplicationsProject.DTO.Requset.FileRequest;
+import NetworkApplicationsProject.DTO.Requset.FilesRequests.AddFileRequest;
+import NetworkApplicationsProject.DTO.Requset.FilesRequests.CheckInFilesRequest;
+import NetworkApplicationsProject.DTO.Requset.FilesRequests.CheckOutFilesRequest;
 import NetworkApplicationsProject.Services.FilesService;
-import NetworkApplicationsProject.Testing.FileServiceTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
@@ -18,11 +19,8 @@ public class FilesController {
     @Autowired
     FilesService filesService;
 
-    @Autowired
-    FileServiceTest fileServiceTest;
-
     @PostMapping("/addFile")
-    public ResponseEntity<?> addFile(@ModelAttribute FileRequest fileData) {
+    public ResponseEntity<?> addFile(@ModelAttribute AddFileRequest fileData) {
         try {
             return new ResponseEntity<>(filesService.addFile(fileData), HttpStatus.OK);
         } catch (CustomException exception) {
@@ -49,7 +47,7 @@ public class FilesController {
     }
 
     @PostMapping("/checkInFiles")
-    public ResponseEntity<?> checkInFiles(@ModelAttribute FileRequest fileRequest) {
+    public ResponseEntity<?> checkInFiles(@ModelAttribute CheckInFilesRequest fileRequest) {
         try {
             return new ResponseEntity<>(filesService.checkInFilesOptimistically(fileRequest), HttpStatus.OK);
         } catch (CustomException exception) {
@@ -60,7 +58,7 @@ public class FilesController {
     }
 
     @PostMapping("/checkOutFiles")
-    public ResponseEntity<?> checkOutFiles(@ModelAttribute FileRequest fileRequest) {
+    public ResponseEntity<?> checkOutFiles(@ModelAttribute CheckOutFilesRequest fileRequest) {
         try {
             return new ResponseEntity<>(filesService.checkOutFilesOptimistically(fileRequest), HttpStatus.OK);
         } catch (CustomException exception) {

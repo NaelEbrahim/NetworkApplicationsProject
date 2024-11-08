@@ -1,16 +1,14 @@
 package NetworkApplicationsProject.Controllers;
 
 import NetworkApplicationsProject.CustomExceptions.CustomException;
-import NetworkApplicationsProject.DTO.Requset.AuthRequest;
+import NetworkApplicationsProject.DTO.Requset.AuthRequests.LoginRequest;
+import NetworkApplicationsProject.DTO.Requset.AuthRequests.RegisterRequest;
 import NetworkApplicationsProject.DTO.Requset.ProfileRequest;
-import NetworkApplicationsProject.Models.UserModel;
 import NetworkApplicationsProject.Services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Profile;
-import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -22,9 +20,9 @@ public class AuthController {
 
     @Autowired
     private UserService userService;
-//WTFffffffff
+
     @PostMapping("/register")
-    public ResponseEntity<?> userRegister(@ModelAttribute @Valid AuthRequest authRequest) {
+    public ResponseEntity<?> userRegister(@ModelAttribute @Valid RegisterRequest authRequest) {
         try {
             return new ResponseEntity<>(userService.register(authRequest), HttpStatus.CREATED);
         } catch (CustomException exception) {
@@ -33,7 +31,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> userLogin(@ModelAttribute @Valid AuthRequest authRequest) {
+    public ResponseEntity<?> userLogin(@ModelAttribute @Valid LoginRequest authRequest) {
         try {
             return new ResponseEntity<>(userService.login(authRequest), HttpStatus.OK);
         } catch (CustomException exception) {
@@ -55,7 +53,7 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/edit/profile")
+    @PostMapping("/editProfile")
     public ResponseEntity<?> editProfile(ProfileRequest profile) {
         try {
             return new ResponseEntity<>(userService.edit(profile), HttpStatus.CREATED);

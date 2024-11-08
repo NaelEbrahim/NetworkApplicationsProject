@@ -1,7 +1,9 @@
 package NetworkApplicationsProject.Services;
 
 import NetworkApplicationsProject.CustomExceptions.CustomException;
-import NetworkApplicationsProject.DTO.Requset.FileRequest;
+import NetworkApplicationsProject.DTO.Requset.FilesRequests.AddFileRequest;
+import NetworkApplicationsProject.DTO.Requset.FilesRequests.CheckInFilesRequest;
+import NetworkApplicationsProject.DTO.Requset.FilesRequests.CheckOutFilesRequest;
 import NetworkApplicationsProject.Enums.RolesEnum;
 import NetworkApplicationsProject.Models.FileModel;
 import NetworkApplicationsProject.Models.GroupModel;
@@ -38,7 +40,7 @@ public class FilesService {
     @Autowired
     FileRepository fileRepository;
 
-    public String addFile(FileRequest fileRequest) {
+    public String addFile(AddFileRequest fileRequest) {
         if (fileRequest.getGroupId() == null) {
             throw new CustomException("group id must not be null", HttpStatus.BAD_REQUEST);
         }
@@ -103,10 +105,10 @@ public class FilesService {
     }
 
     @Transactional
-    public String checkInFilesOptimistically(FileRequest fileRequest) {
+    public String checkInFilesOptimistically(CheckInFilesRequest fileRequest) {
         Optional<GroupModel> targetGroup = groupRepository.findById(fileRequest.getGroupId());
         if (targetGroup.isPresent()) {
-            if (HandleCurrentUserSession.getCurrentUser().getId().equals(targetGroup.get().getGroupOwner().getId())
+            if (HandleCurrentUserSession.getCurrentUser().getId().equals(targetGroup.get().getGroupOwner().getId()) // Commit it if need to Testing
                     || checkIsUserInGroup(targetGroup.get())
             ) {
                 List<FileModel> files = fileRepository.findAllById(fileRequest.getFileIds());
@@ -146,7 +148,7 @@ public class FilesService {
     }
 
     @Transactional
-    public String checkOutFilesOptimistically(FileRequest fileRequest) throws IOException, NoSuchAlgorithmException {
+    public String checkOutFilesOptimistically(CheckOutFilesRequest fileRequest) throws IOException, NoSuchAlgorithmException {
         Optional<GroupModel> targetGroup = groupRepository.findById(fileRequest.getGroupId());
         if (targetGroup.isPresent()) {
             if (HandleCurrentUserSession.getCurrentUser().getId().equals(targetGroup.get().getGroupOwner().getId())

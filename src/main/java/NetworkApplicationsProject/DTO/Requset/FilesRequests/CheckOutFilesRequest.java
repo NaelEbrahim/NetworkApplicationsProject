@@ -1,4 +1,4 @@
-package NetworkApplicationsProject.DTO.Requset;
+package NetworkApplicationsProject.DTO.Requset.FilesRequests;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -8,15 +8,9 @@ import java.util.List;
 
 @Setter
 @Getter
-public class FileRequest {
-
-    private String fileName;
-
-    private MultipartFile file;
+public class CheckOutFilesRequest {
 
     private Integer groupId;
-
-    private String contentType;
 
     private List<Integer> fileIds;
 

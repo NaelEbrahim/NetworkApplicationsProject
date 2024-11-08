@@ -1,6 +1,6 @@
 package NetworkApplicationsProject.Testing;
 
-import NetworkApplicationsProject.DTO.Requset.FileRequest;
+import NetworkApplicationsProject.DTO.Requset.FilesRequests.CheckInFilesRequest;
 import NetworkApplicationsProject.Services.FilesService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +22,7 @@ public class TestServices {
     @Test
     public void testOptimisticLockingOnFileReservation() {
         // Define Dummy Request Data
-        FileRequest fileRequest = new FileRequest();
+        CheckInFilesRequest fileRequest = new CheckInFilesRequest();
         fileRequest.setGroupId(1);
         ArrayList<Integer> fileIds = new ArrayList<>();
         fileIds.add(3);
