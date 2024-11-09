@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.http.ResponseEntity;
 
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -33,8 +34,8 @@ public class TestServices {
         Runnable task = () -> {
             try {
                 latch.await();  // Wait for both threads to be ready
-                String result = filesService.checkInFilesOptimistically(fileRequest);
-                System.out.println("Thread succeeded: " + result);
+                filesService.checkInFilesOptimistically(fileRequest);
+                System.out.println("Thread succeeded: files Reserved Successfully");
             } catch (OptimisticLockingFailureException e) {
                 System.out.println("Optimistic locking exception caught!");
             } catch (Exception e) {

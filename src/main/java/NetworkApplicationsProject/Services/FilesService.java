@@ -16,6 +16,7 @@ import NetworkApplicationsProject.Tools.FilesManagement;
 import NetworkApplicationsProject.Tools.HandleCurrentUserSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -105,7 +106,7 @@ public class FilesService {
     }
 
     @Transactional
-    public String checkInFilesOptimistically(CheckInFilesRequest fileRequest) {
+    public ResponseEntity<?> checkInFilesOptimistically(CheckInFilesRequest fileRequest) {
         Optional<GroupModel> targetGroup = groupRepository.findById(fileRequest.getGroupId());
         if (targetGroup.isPresent()) {
             if (HandleCurrentUserSession.getCurrentUser().getId().equals(targetGroup.get().getGroupOwner().getId()) // Commit it if need to Testing
@@ -117,7 +118,7 @@ public class FilesService {
                     for (FileModel file : files) {
                         // Check that all files are available
                         if (!file.getIsAvailable()) {
-                            throw new CustomException("One or more files are already reserved.", HttpStatus.BAD_REQUEST);
+                            throw new CustomException("file with name : " + file.getFileName() + " is already reserved.", HttpStatus.LOCKED);
                         }
                     }
                 } else {
@@ -127,7 +128,7 @@ public class FilesService {
                 files.forEach(file -> file.setIsAvailable(false));
                 // Save all to trigger optimistic locking
                 fileRepository.saveAll(files);
-                return "files Reserved Successfully";
+                return new ResponseEntity<>(files, HttpStatus.OK);
             } else {
                 throw new CustomException("you must be Owner or member in group", HttpStatus.UNAUTHORIZED);
             }

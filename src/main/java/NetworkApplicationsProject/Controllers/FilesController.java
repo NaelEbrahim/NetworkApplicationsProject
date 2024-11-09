@@ -49,7 +49,7 @@ public class FilesController {
     @PostMapping("/checkInFiles")
     public ResponseEntity<?> checkInFiles(@ModelAttribute CheckInFilesRequest fileRequest) {
         try {
-            return new ResponseEntity<>(filesService.checkInFilesOptimistically(fileRequest), HttpStatus.OK);
+            return filesService.checkInFilesOptimistically(fileRequest);
         } catch (CustomException exception) {
             return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
         } catch (Exception exception) {
