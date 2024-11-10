@@ -11,4 +11,5 @@ public interface GroupRepository extends JpaRepository<GroupModel, Integer> {
 
     Optional<GroupModel> findByName(String name);
 
+    Optional<GroupModel> findBySlug(String groupSlug);
 }

@@ -33,13 +33,14 @@ public class GroupService {
     private GroupUserRepository groupUserRepository;
 
     public GroupResponse createGroup(GroupRequest groupRequest) {
-        if (groupRepository.findByName(groupRequest.getGroupName()).isPresent()) {
-            throw new CustomException("This name is already used with another group", HttpStatus.CONFLICT);
+        if (groupRepository.findBySlug(groupRequest.getGroupSlug()).isPresent()) {
+            throw new CustomException("This Slug is already used with another group", HttpStatus.CONFLICT);
         }
 
         // Create and save new group
         GroupModel newGroup = new GroupModel();
         newGroup.setName(groupRequest.getGroupName());
+        newGroup.setSlug(groupRequest.getGroupSlug());
         newGroup.setType(groupRequest.getGroupType());
         newGroup.setCreatedAt(LocalDateTime.now());
         newGroup.setGroupOwner(HandleCurrentUserSession.getCurrentUser());
