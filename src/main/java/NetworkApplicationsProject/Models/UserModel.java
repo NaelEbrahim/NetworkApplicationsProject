@@ -63,7 +63,7 @@ public class UserModel {
     private List<ActivityModel> userActivities;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "fileOwner", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FileModel> userFiles;
 
     @JsonIgnore

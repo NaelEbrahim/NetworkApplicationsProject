@@ -90,11 +90,11 @@ public class GroupService {
         Optional<UserModel> targetUser = userRepository.findByEmailOrUserName(groupRequest.getUserName(), groupRequest.getUserName());
 
         // Check if the user and group exist
-        if (targetUser.isEmpty()) {
+        if (targetUser.isPresent()) {
             throw new CustomException("User not found", HttpStatus.NOT_FOUND);
         }
 
-        if (targetGroup.isEmpty()) {
+        if (targetGroup.isPresent()) {
             throw new CustomException("Group not found", HttpStatus.NOT_FOUND);
         }
 

@@ -29,6 +29,7 @@ public class FileModel {
     private int realVersion;
 
     @Version
+    @JsonIgnore
     private int version;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -44,9 +45,10 @@ public class FileModel {
     @OneToMany(mappedBy = "fileModel", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ActivityModel> activityModels;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ownerId")
-    private UserModel fileOwner;
+    private UserModel owner;
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
