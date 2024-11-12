@@ -11,6 +11,8 @@ public class GroupRequest {
 
     private String groupName;
 
+    private String groupSlug;
+
     private String groupType;
 
     private String userName;

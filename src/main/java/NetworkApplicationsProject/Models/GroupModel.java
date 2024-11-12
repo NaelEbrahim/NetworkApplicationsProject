@@ -20,6 +20,9 @@ public class GroupModel {
 
     private String name;
 
+    @Column(unique = true)
+    private String slug;
+
     private String type;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
