@@ -71,7 +71,7 @@ public class FilesController {
     @GetMapping("/getUserFilesInGroup")
     public ResponseEntity<?> getUploadedUserFilesInGroup(@Param("groupId") Integer groupId) {
         try {
-            return new ResponseEntity<>(filesService.getUploadUserFiles(groupId), HttpStatus.OK);
+            return new ResponseEntity<>(filesService.getUploadUserFiles(groupId), HttpStatus.OK );
         } catch (CustomException exception) {
             return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
         }
