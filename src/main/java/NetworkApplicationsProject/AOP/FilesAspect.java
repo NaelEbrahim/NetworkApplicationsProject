@@ -58,7 +58,6 @@ public class FilesAspect {
     private void storeTracingInDataBase(ResponseEntity<List<FileModel>> executionResult, String tracingType) {
         List<FileModel> fileModels = executionResult.getBody();
         if (fileModels != null && !fileModels.isEmpty()) {
-            System.out.println(fileModels.size());
             for (FileModel temp : fileModels) {
                 if (temp != null) {
                     ActivityModel activityModel = new ActivityModel();
