@@ -60,7 +60,8 @@ public class FilesController {
     @PostMapping("/checkOutFiles")
     public ResponseEntity<?> checkOutFiles(@ModelAttribute CheckOutFilesRequest fileRequest) {
         try {
-            return new ResponseEntity<>(filesService.checkOutFilesOptimistically(fileRequest), HttpStatus.OK);
+            //return filesService.checkOutFilesOptimistically(fileRequest);
+            return filesService.checkOutFilesOptimistically(fileRequest);
         } catch (CustomException exception) {
             return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
         } catch (Exception exception) {

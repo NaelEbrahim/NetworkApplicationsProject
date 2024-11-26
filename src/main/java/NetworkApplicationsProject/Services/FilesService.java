@@ -111,7 +111,7 @@ public class FilesService {
     }
 
     @Transactional
-    public ResponseEntity<?> checkInFilesOptimistically(CheckInFilesRequest fileRequest) {
+    public ResponseEntity<List<FileModel>> checkInFilesOptimistically(CheckInFilesRequest fileRequest) {
         Optional<GroupModel> targetGroup = groupRepository.findById(fileRequest.getGroupId());
         if (targetGroup.isPresent()) {
             if (HandleCurrentUserSession.getCurrentUser().getId().equals(targetGroup.get().getGroupOwner().getId()) // Commit it if need to Testing
@@ -154,7 +154,7 @@ public class FilesService {
     }
 
     @Transactional
-    public String checkOutFilesOptimistically(CheckOutFilesRequest fileRequest) throws IOException, NoSuchAlgorithmException {
+    public ResponseEntity<List<FileModel>> checkOutFilesOptimistically(CheckOutFilesRequest fileRequest) throws IOException, NoSuchAlgorithmException {
         Optional<GroupModel> targetGroup = groupRepository.findById(fileRequest.getGroupId());
         if (targetGroup.isPresent()) {
             if (HandleCurrentUserSession.getCurrentUser().getId().equals(targetGroup.get().getGroupOwner().getId())
@@ -191,7 +191,7 @@ public class FilesService {
                     }
                     // Save all to trigger optimistic locking
                     fileRepository.saveAll(files);
-                    return "files Checked-Out Successfully";
+                    return new ResponseEntity<>(files, HttpStatus.OK);
                 } else {
                     throw new CustomException("please upload valid files", HttpStatus.BAD_REQUEST);
                 }
