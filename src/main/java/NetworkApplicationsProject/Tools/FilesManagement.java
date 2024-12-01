@@ -16,7 +16,7 @@ import java.util.Objects;
 
 public class FilesManagement {
 
-    private static final String UPLOAD_DIR = "C:\\Users\\NAEL PC\\Desktop\\NetworkApplicationsProject\\Files";
+    private static final String UPLOAD_DIR = "C:\\Users\\LEGION\\OneDrive\\Desktop\\networkApplicationsProject\\Files";
 
     public static File uploadSingleFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {

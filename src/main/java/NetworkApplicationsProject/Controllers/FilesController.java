@@ -4,12 +4,15 @@ import NetworkApplicationsProject.CustomExceptions.CustomException;
 import NetworkApplicationsProject.DTO.Requset.FilesRequests.AddFileRequest;
 import NetworkApplicationsProject.DTO.Requset.FilesRequests.CheckInFilesRequest;
 import NetworkApplicationsProject.DTO.Requset.FilesRequests.CheckOutFilesRequest;
+import NetworkApplicationsProject.Models.ActivityModel;
 import NetworkApplicationsProject.Services.FilesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 @RestController
@@ -77,5 +80,27 @@ public class FilesController {
             return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
         }
     }
+
+    // Get all logs for a file in a specific group
+    @GetMapping("/logs/file")
+    public ResponseEntity<?> getLogsByFileId(
+            @Param("fileId")  Integer fileId, @Param("groupId") Integer groupId) {
+        try {
+            return new ResponseEntity<>(filesService.getLogsByFile(fileId,groupId), HttpStatus.OK );
+        } catch (CustomException exception) {
+            return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
+        }
+    }
+
+    // Get all logs for a user in a specific group
+    @GetMapping("/logs/user")
+    public ResponseEntity<?> getLogsByUserId(@Param("groupId") Integer groupId) {
+        try {
+            return new ResponseEntity<>(filesService.getLogsByUser(groupId), HttpStatus.OK );
+        } catch (CustomException exception) {
+            return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
+        }
+    }
+
 
 }

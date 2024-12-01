@@ -5,10 +5,8 @@ import NetworkApplicationsProject.DTO.Requset.FilesRequests.AddFileRequest;
 import NetworkApplicationsProject.DTO.Requset.FilesRequests.CheckInFilesRequest;
 import NetworkApplicationsProject.DTO.Requset.FilesRequests.CheckOutFilesRequest;
 import NetworkApplicationsProject.Enums.RolesEnum;
-import NetworkApplicationsProject.Models.FileModel;
-import NetworkApplicationsProject.Models.GroupModel;
-import NetworkApplicationsProject.Models.GroupUserModel;
-import NetworkApplicationsProject.Models.UserModel;
+import NetworkApplicationsProject.Models.*;
+import NetworkApplicationsProject.Repositories.ActivityRepository;
 import NetworkApplicationsProject.Repositories.FileRepository;
 import NetworkApplicationsProject.Repositories.GroupRepository;
 import NetworkApplicationsProject.Repositories.GroupUserRepository;
@@ -40,6 +38,9 @@ public class FilesService {
 
     @Autowired
     FileRepository fileRepository;
+
+    @Autowired
+    ActivityRepository activityRepository;
 
 
     public String addFile(AddFileRequest fileRequest) {
@@ -221,6 +222,31 @@ public class FilesService {
                 throw new CustomException("you are not member in this group", HttpStatus.FORBIDDEN);
             }
         } else {
+            throw new CustomException("group with this id not found", HttpStatus.NOT_FOUND);
+        }
+    }
+
+    public List<ActivityModel> getLogsByFile( Integer fileId,Integer groupId) {
+        Optional<GroupModel> targetGroup = groupRepository.findById(groupId);
+        Optional<FileModel> targetFile = fileRepository.findById(fileId);
+        if (targetGroup.isPresent()) {
+            UserModel currentUser = HandleCurrentUserSession.getCurrentUser();
+            if(targetFile.isPresent()) {
+                if (currentUser.getRole().equals(RolesEnum.SUPER_ADMIN)
+                        || currentUser.getId().equals(targetGroup.get().getGroupOwner().getId())
+                        || checkIsCurrentUserInGroup(targetGroup.get())
+                ) {
+                   return activityRepository.findByFileModelId(fileId);
+                }
+                else {
+                    throw new CustomException("you don't have permissions to access to this logs", HttpStatus.UNAUTHORIZED);
+                }
+            }
+            else {
+                throw new CustomException("group with this id not found", HttpStatus.NOT_FOUND);
+            }
+        }
+        else {
             throw new CustomException("group with this id not found", HttpStatus.NOT_FOUND);
         }
     }
