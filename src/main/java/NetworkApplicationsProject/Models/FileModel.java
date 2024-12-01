@@ -43,6 +43,7 @@ public class FileModel {
 
     @JsonIgnore
     @OneToMany(mappedBy = "fileModel", cascade = CascadeType.ALL, orphanRemoval = true)
+
     private List<ActivityModel> activityModels;
 
     @JsonIgnore

@@ -250,5 +250,57 @@ public class FilesService {
             throw new CustomException("group with this id not found", HttpStatus.NOT_FOUND);
         }
     }
+    @Transactional
+    public List<ActivityModel> getLogsByUserAndGroup(Integer groupId) {
+        // Fetch the target group
+        Optional<GroupModel> targetGroup = groupRepository.findById(groupId);
+        if (!targetGroup.isPresent()) {
+            throw new CustomException("Group not found", HttpStatus.NOT_FOUND);
+        }
+
+        // Get the current user
+        UserModel currentUser = HandleCurrentUserSession.getCurrentUser();
+
+        // Check if the user has access to the group
+        if (currentUser.getRole().equals(RolesEnum.SUPER_ADMIN)
+                || currentUser.getId().equals(targetGroup.get().getGroupOwner().getId())
+                || checkIsCurrentUserInGroup(targetGroup.get())) {
+            // Fetch all activities related to the user and the group
+            return activityRepository.findByUserAndGroup(currentUser.getId(), groupId);
+        }
+        else {
+            throw new CustomException("You don't have permission to access these logs", HttpStatus.UNAUTHORIZED);
+        }
+    }
+
+    @Transactional
+    public List<ActivityModel> getLogsByUserAndFileInGroup(Integer fileId, Integer groupId) {
+        // Fetch the target group and file
+        Optional<GroupModel> targetGroup = groupRepository.findById(groupId);
+        Optional<FileModel> targetFile = fileRepository.findById(fileId);
+
+        if (!targetGroup.isPresent()) {
+            throw new CustomException("Group not found", HttpStatus.NOT_FOUND);
+        }
+
+        if (!targetFile.isPresent()) {
+            throw new CustomException("File not found", HttpStatus.NOT_FOUND);
+        }
+
+        // Get the current user
+        UserModel currentUser = HandleCurrentUserSession.getCurrentUser();
+
+        // Check if the current user has permission to access the group and file
+        if (currentUser.getRole().equals(RolesEnum.SUPER_ADMIN)
+                || currentUser.getId().equals(targetGroup.get().getGroupOwner().getId())
+                || checkIsCurrentUserInGroup(targetGroup.get())) {
+
+            // Fetch the activity logs for the user, file, and group
+            return activityRepository.findByUserAndFileAndGroup(currentUser.getId(), fileId, groupId);
+        } else {
+            throw new CustomException("You don't have permission to access these logs", HttpStatus.UNAUTHORIZED);
+        }
+    }
+
 
 }

@@ -82,7 +82,7 @@ public class FilesController {
     }
 
     // Get all logs for a file in a specific group
-    @GetMapping("/logs/file")
+    @GetMapping("/logs/ByFile")
     public ResponseEntity<?> getLogsByFileId(
             @Param("fileId")  Integer fileId, @Param("groupId") Integer groupId) {
         try {
@@ -91,16 +91,29 @@ public class FilesController {
             return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
         }
     }
-
     // Get all logs for a user in a specific group
-    @GetMapping("/logs/user")
-    public ResponseEntity<?> getLogsByUserId(@Param("groupId") Integer groupId) {
+    @GetMapping("/logs/ByUser")
+    public ResponseEntity<?> getLogsByUserAndGroup(@Param("groupId") Integer groupId) {
         try {
-            return new ResponseEntity<>(filesService.getLogsByUser(groupId), HttpStatus.OK );
+            List<ActivityModel> logs = filesService.getLogsByUserAndGroup(groupId);
+            return new ResponseEntity<>(logs, HttpStatus.OK);
         } catch (CustomException exception) {
             return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
         }
     }
+
+    // Get logs for a user on a specific file in a group
+    @GetMapping("/logs/ByUser&File")
+    public ResponseEntity<?> getLogsByUserAndFileInGroup(
+            @RequestParam Integer fileId, @RequestParam Integer groupId) {
+        try {
+            List<ActivityModel> logs = filesService.getLogsByUserAndFileInGroup(fileId, groupId);
+            return new ResponseEntity<>(logs, HttpStatus.OK);
+        } catch (CustomException exception) {
+            return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
+        }
+    }
+
 
 
 }
