@@ -35,9 +35,9 @@ public class GroupsController {
     }
 
     @DeleteMapping("/deleteGroup")
-    public ResponseEntity<?> deleteGroup(@Param("groupName") String groupName) {
+    public ResponseEntity<?> deleteGroup(@Param("groupId") Integer groupId) {
         try {
-            return new ResponseEntity<>(groupService.deleteGroup(groupName), HttpStatus.OK);
+            return new ResponseEntity<>(groupService.deleteGroup(groupId), HttpStatus.OK);
         } catch (CustomException exception) {
             return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
         }
