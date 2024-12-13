@@ -114,6 +114,16 @@ public class FilesController {
         }
     }
 
+    @GetMapping("/versions")
+    public ResponseEntity<?> getFileAndVersions(@RequestParam Integer fileId, @RequestParam Integer groupId) {
+        try {
+            return new ResponseEntity<>(filesService.getFileAndVersionsPaths(groupId, fileId), HttpStatus.OK);
+        } catch (CustomException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(e.getMessage());
+        }
+    }
+
+
 
 
 }

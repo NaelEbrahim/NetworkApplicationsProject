@@ -13,7 +13,7 @@ import java.util.Date;
 import java.util.function.Function;
 
 @Service
-public class JWTService {
+public class   JWTService {
 
     public String getEmail(String token) {
         return extractClaim(token, Claims::getSubject);

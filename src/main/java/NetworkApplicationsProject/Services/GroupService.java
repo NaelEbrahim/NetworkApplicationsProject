@@ -10,11 +10,13 @@ import NetworkApplicationsProject.Models.UserModel;
 import NetworkApplicationsProject.Repositories.GroupRepository;
 import NetworkApplicationsProject.Repositories.GroupUserRepository;
 import NetworkApplicationsProject.Repositories.UserRepository;
+import NetworkApplicationsProject.Tools.FilesManagement;
 import NetworkApplicationsProject.Tools.HandleCurrentUserSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -32,31 +34,48 @@ public class GroupService {
     @Autowired
     private GroupUserRepository groupUserRepository;
 
-    public GroupResponse createGroup(GroupRequest groupRequest) {
+    public GroupModel createGroup(GroupRequest groupRequest) {
+        // Validate request
+        if (groupRequest.getGroupName() == null || groupRequest.getGroupName().isEmpty()) {
+            throw new CustomException("Group name must not be null or empty", HttpStatus.BAD_REQUEST);
+        }
         if (groupRepository.findBySlug(groupRequest.getGroupSlug()).isPresent()) {
             throw new CustomException("This Slug is already used with another group", HttpStatus.CONFLICT);
         }
 
-        // Create and save new group
+        // Create the group
         GroupModel newGroup = new GroupModel();
         newGroup.setName(groupRequest.getGroupName());
-        newGroup.setSlug(groupRequest.getGroupSlug());
         newGroup.setType(groupRequest.getGroupType());
+        newGroup.setSlug(groupRequest.getGroupSlug());
         newGroup.setCreatedAt(LocalDateTime.now());
         newGroup.setGroupOwner(HandleCurrentUserSession.getCurrentUser());
         groupRepository.save(newGroup);
 
-        // Prepare and return response
-        GroupResponse groupResponse = new GroupResponse();
-        groupResponse.setGroupInfo(newGroup);
-        return groupResponse;
+        // Add the owner to the group as a member
+        GroupUserModel groupOwnerMembership = new GroupUserModel();
+        groupOwnerMembership.setGroupModel(newGroup);
+        groupOwnerMembership.setUser(HandleCurrentUserSession.getCurrentUser());
+        groupOwnerMembership.setUser(HandleCurrentUserSession.getCurrentUser()); // Assuming `OWNER` is a role in your enum
+        groupOwnerMembership.setJoinDate(LocalDateTime.now());
+        groupUserRepository.save(groupOwnerMembership);
+
+        return newGroup;
     }
 
-    public String deleteGroup(String groupName) {
-        Optional<GroupModel> targetGroup = groupRepository.findByName(groupName);
+
+
+    public String deleteGroup(int groupId) {
+        Optional<GroupModel> targetGroup = groupRepository.findById(groupId);
         if (targetGroup.isPresent()) {
-            if (targetGroup.get().getGroupOwner().getId().equals(HandleCurrentUserSession.getCurrentUser().getId())) {
-                groupRepository.delete(targetGroup.get());
+            GroupModel group = targetGroup.get();
+            if (group.getGroupOwner().getId().equals(HandleCurrentUserSession.getCurrentUser().getId())) {
+                // Delete group folder
+                File groupFolder = new File(FilesManagement.UPLOAD_DIR, group.getSlug());
+                FilesManagement.deleteFolder(groupFolder);
+
+                // Delete the group from the database
+                groupRepository.delete(group);
                 return "Group deleted successfully";
             } else {
                 throw new CustomException("You cannot delete this group because you are not the owner", HttpStatus.UNAUTHORIZED);
@@ -65,6 +84,7 @@ public class GroupService {
             throw new CustomException("Group with this name not found", HttpStatus.NOT_FOUND);
         }
     }
+
 
     public GroupResponse updateGroup(GroupRequest groupRequest) {
         GroupModel group = groupRepository.findById(groupRequest.getGroupId())
