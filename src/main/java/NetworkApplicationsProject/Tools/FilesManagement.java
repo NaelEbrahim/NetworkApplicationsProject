@@ -11,13 +11,11 @@ import java.io.InputStream;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class FilesManagement {
 
-    private static final String UPLOAD_DIR = Paths.get(System.getProperty("user.dir"), "Files").toString();;
+    public static final String UPLOAD_DIR = Paths.get(System.getProperty("user.dir"), "Files").toString();
 
     public static File uploadSingleFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
@@ -129,5 +127,101 @@ public class FilesManagement {
         }
         return sb.toString();
     }
+
+    // Create group-specific directory
+    public static File createGroupFolder(String groupSlug) {
+        File groupDir = new File(UPLOAD_DIR, groupSlug);
+        if (!groupDir.exists() && !groupDir.mkdirs()) {
+            throw new CustomException("Failed to create group directory: " + groupSlug, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return groupDir;
+    }
+
+    public static void createFileVersion(String groupSlug, String fileName, File oldVersion, MultipartFile newFile, int version) {
+        // Create the directory structure for versions: Files/groupName/filename/versions
+        File versionsDir = new File(FilesManagement.UPLOAD_DIR, groupSlug + "/" + fileName.substring(0, fileName.lastIndexOf('.')) + "/versions");
+        if (!versionsDir.exists()) {
+            versionsDir.mkdirs();
+        }
+
+        // Create the new file name based on versioning (file_2.txt, file_3.txt, etc.)
+        String versionedFileName = fileName.substring(0, fileName.lastIndexOf('.')) + "_" + version + fileName.substring(fileName.lastIndexOf('.'));
+        File newVersionFile = new File(versionsDir, versionedFileName);
+
+        try {
+            // Save the new version of the file
+            newFile.transferTo(newVersionFile);
+        } catch (IOException e) {
+            throw new CustomException("Error saving file version: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public static void cleanupOldVersions(String groupSlug, String fileName, int maxVersions) {
+        // Path to the versions directory
+        File versionsDir = new File(UPLOAD_DIR, groupSlug + "/" + fileName.substring(0, fileName.lastIndexOf('.')) + "/versions");
+
+        // Check if the directory exists
+        if (!versionsDir.exists()) {
+            return; // Nothing to clean up
+        }
+
+        // Get all files matching the versioned file pattern, including the original file
+        File[] versionFiles = versionsDir.listFiles((dir, name) -> {
+            String baseName = fileName.substring(0, fileName.lastIndexOf('.'));
+            String extension = fileName.substring(fileName.lastIndexOf('.'));
+            return name.equals(fileName) || (name.startsWith(baseName + "_") && name.endsWith(extension));
+        });
+
+        if (versionFiles == null || versionFiles.length <= maxVersions) {
+            return; // Nothing to clean up
+        }
+
+        // Sort files by version number (ascending), treating the original file as version 1
+        Arrays.sort(versionFiles, Comparator.comparingInt(file -> {
+            String fileNameOnly = file.getName();
+
+            if (fileNameOnly.equals(fileName)) {
+                return 1; // Original file is version 1
+            }
+
+            // Extract version number for other files
+            String baseName = fileName.substring(0, fileName.lastIndexOf('.'));
+            String extension = fileName.substring(fileName.lastIndexOf('.'));
+            String versionSuffix = fileNameOnly.replace(baseName, "").replace(extension, "").replace("_", "");
+
+            try {
+                return Integer.parseInt(versionSuffix);
+            } catch (NumberFormatException e) {
+                return Integer.MAX_VALUE; // Put improperly named files at the end
+            }
+        }));
+
+        // Delete the oldest files to retain only the last `maxVersions`
+        for (int i = 0; i < versionFiles.length - maxVersions; i++) {
+            if (!versionFiles[i].delete()) {
+                throw new CustomException("Failed to delete old version: " + versionFiles[i].getName(), HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
+    }
+
+    public static boolean deleteFolder(File folder) {
+        if (folder.exists()) {
+            File[] files = folder.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isDirectory()) {
+                        deleteFolder(file); // Recursive call for subfolders
+                    } else {
+                        if (!file.delete()) {
+                            System.err.println("Failed to delete file: " + file.getAbsolutePath());
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+        return folder.delete(); // Delete the empty folder itself
+    }
+
 
 }

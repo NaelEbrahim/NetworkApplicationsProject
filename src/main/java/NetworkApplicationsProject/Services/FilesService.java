@@ -4,12 +4,10 @@ import NetworkApplicationsProject.CustomExceptions.CustomException;
 import NetworkApplicationsProject.DTO.Requset.FilesRequests.AddFileRequest;
 import NetworkApplicationsProject.DTO.Requset.FilesRequests.CheckInFilesRequest;
 import NetworkApplicationsProject.DTO.Requset.FilesRequests.CheckOutFilesRequest;
+import NetworkApplicationsProject.Enums.ActionsEnum;
 import NetworkApplicationsProject.Enums.RolesEnum;
 import NetworkApplicationsProject.Models.*;
-import NetworkApplicationsProject.Repositories.ActivityRepository;
-import NetworkApplicationsProject.Repositories.FileRepository;
-import NetworkApplicationsProject.Repositories.GroupRepository;
-import NetworkApplicationsProject.Repositories.GroupUserRepository;
+import NetworkApplicationsProject.Repositories.*;
 import NetworkApplicationsProject.Tools.FilesManagement;
 import NetworkApplicationsProject.Tools.HandleCurrentUserSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +37,12 @@ public class FilesService {
 
     @Autowired
     ActivityRepository activityRepository;
+
+    @Autowired
+    NotificationService notificationService;
+
+    @Autowired
+    NotificationsRepository notificationsRepository;
 
 
     public String addFile(AddFileRequest fileRequest) {
@@ -254,7 +258,12 @@ public class FilesService {
                     }
 
                     // Reserve files (mark them as unavailable)
-                    files.forEach(file -> file.setIsAvailable(false));
+                    files.forEach(file -> {
+                        file.setIsAvailable(false);
+                        // handle Notification
+                        String notification = HandleCurrentUserSession.getCurrentUser().getUserName() + " has been " + ActionsEnum.CHECKED_IN + " file with name: " + file.getFileName();
+                        handleNotification(targetGroup.get(), notification);
+                    });
                     fileRepository.saveAll(files);  // Save all to trigger optimistic locking
 
                     return new ResponseEntity<>(files, HttpStatus.OK);
@@ -328,10 +337,17 @@ public class FilesService {
                                 currentFile.setRealVersion(newVersion); // Update the real version
                                 currentFile.setFilePath(updatedFile.getAbsolutePath()); // Update the path to the new file version
                                 currentFile.setLastModifiedAt(LocalDateTime.now()); // Update the modified time
+                                // handle Notification
+                                String notification = HandleCurrentUserSession.getCurrentUser().getUserName() + " has been " + ActionsEnum.CHECKED_OUT + " file with name: " + currentFile.getFileName() + " with change file content";
+                                handleNotification(targetGroup.get(), notification);
+                                //
                             }
-
                             // Release the file (mark it as available)
                             Objects.requireNonNull(currentFile).setIsAvailable(true);
+                            // handle Notification
+                            String notification = HandleCurrentUserSession.getCurrentUser().getUserName() + " has been " + ActionsEnum.CHECKED_OUT + " file with name: " + currentFile.getFileName() + " withOut change file content";
+                            handleNotification(targetGroup.get(), notification);
+                            //
                         }
 
                         // Save all updated files to trigger optimistic locking
@@ -360,6 +376,13 @@ public class FilesService {
         return null;
     }
 
+    private void handleNotification(GroupModel groupModel, String notification) {
+        // send Notification
+        notificationService.sendNotification(groupModel.getId().toString(), notification);
+        // store in DataBase
+        notificationsRepository.save(NotificationsModel.builder().group(groupModel).content(notification).date(LocalDateTime.now()).build());
+    }
+
     public List<Map<String, Object>> getUploadUserFiles(Integer groupId) {
         Optional<GroupModel> targetGroup = groupRepository.findById(groupId);
         if (targetGroup.isPresent()) {
@@ -386,30 +409,28 @@ public class FilesService {
         }
     }
 
-    public List<ActivityModel> getLogsByFile( Integer fileId,Integer groupId) {
+    public List<ActivityModel> getLogsByFile(Integer fileId, Integer groupId) {
         Optional<GroupModel> targetGroup = groupRepository.findById(groupId);
         Optional<FileModel> targetFile = fileRepository.findById(fileId);
         if (targetGroup.isPresent()) {
             UserModel currentUser = HandleCurrentUserSession.getCurrentUser();
-            if(targetFile.isPresent()) {
-                if (    currentUser.getRole().equals(RolesEnum.SUPER_ADMIN)
+            if (targetFile.isPresent()) {
+                if (currentUser.getRole().equals(RolesEnum.SUPER_ADMIN)
                         || currentUser.getId().equals(targetGroup.get().getGroupOwner().getId())
                         || checkIsCurrentUserInGroup(targetGroup.get())
                 ) {
-                   return activityRepository.findByFileModelId(fileId);
-                }
-                else {
+                    return activityRepository.findByFileModelId(fileId);
+                } else {
                     throw new CustomException("you don't have permissions to access to this logs", HttpStatus.UNAUTHORIZED);
                 }
-            }
-            else {
+            } else {
                 throw new CustomException("group with this id not found", HttpStatus.NOT_FOUND);
             }
-        }
-        else {
+        } else {
             throw new CustomException("group with this id not found", HttpStatus.NOT_FOUND);
         }
     }
+
     @Transactional
     public List<ActivityModel> getLogsByUserAndGroup(Integer groupId) {
         // Fetch the target group
@@ -422,13 +443,12 @@ public class FilesService {
         UserModel currentUser = HandleCurrentUserSession.getCurrentUser();
 
         // Check if the user has access to the group
-        if (    currentUser.getRole().equals(RolesEnum.SUPER_ADMIN)
+        if (currentUser.getRole().equals(RolesEnum.SUPER_ADMIN)
                 || currentUser.getId().equals(targetGroup.get().getGroupOwner().getId())
                 || checkIsCurrentUserInGroup(targetGroup.get())) {
             // Fetch all activities related to the user and the group
             return activityRepository.findByUserAndGroup(currentUser.getId(), groupId);
-        }
-        else {
+        } else {
             throw new CustomException("You don't have permission to access these logs", HttpStatus.UNAUTHORIZED);
         }
     }
@@ -451,7 +471,7 @@ public class FilesService {
         UserModel currentUser = HandleCurrentUserSession.getCurrentUser();
 
         // Check if the current user has permission to access the group and file
-        if (    currentUser.getRole().equals(RolesEnum.SUPER_ADMIN)
+        if (currentUser.getRole().equals(RolesEnum.SUPER_ADMIN)
                 || currentUser.getId().equals(targetGroup.get().getGroupOwner().getId())
                 || checkIsCurrentUserInGroup(targetGroup.get())) {
 
@@ -512,7 +532,6 @@ public class FilesService {
 
         return filePaths;
     }
-
 
 
 }
