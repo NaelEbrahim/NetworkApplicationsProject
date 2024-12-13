@@ -1,5 +1,6 @@
-package NetworkApplicationsProject.Security;
+package NetworkApplicationsProject.Config;
 
+import NetworkApplicationsProject.Security.JWTRequestFilter;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,7 +21,7 @@ public class SecurityConfig {
                 .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("api/auth/register","api/auth/login", "/swagger-ui/**",
-                                "/v3/api-docs/**")
+                                "/v3/api-docs/**","/ws/**","/index.html")
                         .permitAll()
                         .anyRequest()
                         .authenticated());

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Group Notifications</title>
+</head>
+<body>
+<h1>Group Notifications</h1>
+<div id="notifications">
+    <h3>Notifications:</h3>
+    <ul id="notification-list"></ul>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+<script>
+    // Replace with your Bearer token and group ID
+    const bearerToken = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJyYW1pMTM0QGdtYWlsLmNvbSIsImlhdCI6MTczMzQyNTc0NywiZXhwIjoxNzMzNTEyMTQ3fQ.uVd3HXfNyHcQs32frTe7JDsUQjDc_iRQkhqIN37C4R4";
+    const groupId = "1"; // Replace with the actual group ID
+
+    // Initialize the SockJS connection
+    const socket = new SockJS("http://localhost:8080/ws");
+    const stompClient = Stomp.over(socket);
+
+    // Function to append notifications to the DOM
+    function addNotification(message) {
+        const notificationList = document.getElementById("notification-list");
+        const listItem = document.createElement("li");
+        listItem.textContent = `Message: ${message}`;
+        notificationList.appendChild(listItem);
+    }
+
+    // Connect to WebSocket and subscribe to the group topic
+    stompClient.connect(
+        { Authorization: `Bearer ${bearerToken}` }, // Custom headers
+        function (frame) {
+            console.log("Connected: " + frame);
+
+            // Subscribe to the group topic
+            stompClient.subscribe(`/user/group-${groupId}/notification`, function (notification) {
+                const message = JSON.parse(notification.body);
+                console.log("Notification received:", message);
+
+                // Display the notification
+                addNotification(message); // Adjust based on the message format
+            });
+        },
+        function (error) {
+            console.error("Error connecting to WebSocket:", error);
+        }
+    );
+</script>
+</body>
+</html>

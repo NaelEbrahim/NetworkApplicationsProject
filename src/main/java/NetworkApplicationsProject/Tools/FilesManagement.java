@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -16,7 +17,7 @@ import java.util.Objects;
 
 public class FilesManagement {
 
-    private static final String UPLOAD_DIR = "C:\\Users\\LEGION\\OneDrive\\Desktop\\networkApplicationsProject\\Files";
+    private static final String UPLOAD_DIR = Paths.get(System.getProperty("user.dir"), "Files").toString();;
 
     public static File uploadSingleFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {

@@ -34,14 +34,22 @@ public class FilesAspect {
 
     @Around("fileActions()")
     public Object logAround(ProceedingJoinPoint joinPoint) throws Throwable {
+        Object result = null;
+        long elapsedTime = 0;
+        //
         String methodName = joinPoint.getSignature().getName();
         Object[] args = joinPoint.getArgs();
 
         logger.info("Around (Before): Method {} started with arguments: {}", methodName, args);
 
-        long startTime = System.currentTimeMillis();
-        var result = joinPoint.proceed(); // Proceed to the target method
-        long elapsedTime = System.currentTimeMillis() - startTime;
+        try {
+            long startTime = System.currentTimeMillis();
+            result = joinPoint.proceed(); // Proceed to the target method
+            elapsedTime = System.currentTimeMillis() - startTime;
+
+        } catch (Exception exception) {
+            System.out.println(exception.getMessage());
+        }
 
         logger.info("Around (After): Method {} completed in {} ms", methodName, elapsedTime);
 

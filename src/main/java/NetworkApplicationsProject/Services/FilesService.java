@@ -6,10 +6,8 @@ import NetworkApplicationsProject.DTO.Requset.FilesRequests.CheckInFilesRequest;
 import NetworkApplicationsProject.DTO.Requset.FilesRequests.CheckOutFilesRequest;
 import NetworkApplicationsProject.Enums.RolesEnum;
 import NetworkApplicationsProject.Models.*;
-import NetworkApplicationsProject.Repositories.ActivityRepository;
-import NetworkApplicationsProject.Repositories.FileRepository;
-import NetworkApplicationsProject.Repositories.GroupRepository;
-import NetworkApplicationsProject.Repositories.GroupUserRepository;
+import NetworkApplicationsProject.Enums.ActionsEnum;
+import NetworkApplicationsProject.Repositories.*;
 import NetworkApplicationsProject.Tools.FilesManagement;
 import NetworkApplicationsProject.Tools.HandleCurrentUserSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
 
 import java.io.File;
 import java.io.IOException;
@@ -41,6 +40,12 @@ public class FilesService {
 
     @Autowired
     ActivityRepository activityRepository;
+
+    @Autowired
+    NotificationService notificationService;
+
+    @Autowired
+    private NotificationsRepository notificationsRepository;
 
 
     public String addFile(AddFileRequest fileRequest) {
@@ -131,7 +136,12 @@ public class FilesService {
                     throw new CustomException("one or more entered files Ids Not Found", HttpStatus.NOT_FOUND);
                 }
                 // Reserve files
-                files.forEach(file -> file.setIsAvailable(false));
+                files.forEach(file -> {
+                    file.setIsAvailable(false);
+                    // handle Notification
+                    String notification = HandleCurrentUserSession.getCurrentUser().getUserName() + " has been " + ActionsEnum.CHECKED_IN + " file with name: " + file.getFileName();
+                    handleNotification(targetGroup.get(), notification);
+                });
                 // Save all to trigger optimistic locking
                 fileRepository.saveAll(files);
                 return new ResponseEntity<>(files, HttpStatus.OK);
@@ -186,9 +196,17 @@ public class FilesService {
                             currentFile.setRealVersion(currentFile.getRealVersion() + 1);
                             currentFile.setFilePath(updatedFile.getAbsolutePath());
                             currentFile.setLastModifiedAt(LocalDateTime.now());
+                            // handle Notification
+                            String notification = HandleCurrentUserSession.getCurrentUser().getUserName() + " has been " + ActionsEnum.CHECKED_OUT + " file with name: " + currentFile.getFileName() + " with change file content";
+                            handleNotification(targetGroup.get(), notification);
+                            //
                         }
                         // Release file
                         Objects.requireNonNull(currentFile).setIsAvailable(true);
+                        // handle Notification
+                        String notification = HandleCurrentUserSession.getCurrentUser().getUserName() + " has been " + ActionsEnum.CHECKED_OUT + " file with name: " + currentFile.getFileName()+ " withOut change file content";
+                        handleNotification(targetGroup.get(), notification);
+                        //
                     }
                     // Save all to trigger optimistic locking
                     fileRepository.saveAll(files);
@@ -226,30 +244,28 @@ public class FilesService {
         }
     }
 
-    public List<ActivityModel> getLogsByFile( Integer fileId,Integer groupId) {
+    public List<ActivityModel> getLogsByFile(Integer fileId, Integer groupId) {
         Optional<GroupModel> targetGroup = groupRepository.findById(groupId);
         Optional<FileModel> targetFile = fileRepository.findById(fileId);
         if (targetGroup.isPresent()) {
             UserModel currentUser = HandleCurrentUserSession.getCurrentUser();
-            if(targetFile.isPresent()) {
+            if (targetFile.isPresent()) {
                 if (currentUser.getRole().equals(RolesEnum.SUPER_ADMIN)
                         || currentUser.getId().equals(targetGroup.get().getGroupOwner().getId())
                         || checkIsCurrentUserInGroup(targetGroup.get())
                 ) {
-                   return activityRepository.findByFileModelId(fileId);
-                }
-                else {
+                    return activityRepository.findByFileModelId(fileId);
+                } else {
                     throw new CustomException("you don't have permissions to access to this logs", HttpStatus.UNAUTHORIZED);
                 }
-            }
-            else {
+            } else {
                 throw new CustomException("group with this id not found", HttpStatus.NOT_FOUND);
             }
-        }
-        else {
+        } else {
             throw new CustomException("group with this id not found", HttpStatus.NOT_FOUND);
         }
     }
+
     @Transactional
     public List<ActivityModel> getLogsByUserAndGroup(Integer groupId) {
         // Fetch the target group
@@ -267,8 +283,7 @@ public class FilesService {
                 || checkIsCurrentUserInGroup(targetGroup.get())) {
             // Fetch all activities related to the user and the group
             return activityRepository.findByUserAndGroup(currentUser.getId(), groupId);
-        }
-        else {
+        } else {
             throw new CustomException("You don't have permission to access these logs", HttpStatus.UNAUTHORIZED);
         }
     }
@@ -302,5 +317,11 @@ public class FilesService {
         }
     }
 
-
+    private void handleNotification(GroupModel groupModel, String notification) {
+        // Send notification
+        notificationService.sendNotification(groupModel.getId().toString(), notification);
+        // Store notification in DataBase
+        notificationsRepository.save(NotificationsModel.builder().group(groupModel).content(notification).date(LocalDateTime.now()).build());
+        //
+    }
 }

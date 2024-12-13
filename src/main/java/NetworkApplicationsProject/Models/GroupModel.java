@@ -36,6 +36,10 @@ public class GroupModel {
     @OneToMany(mappedBy = "groupModel", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<GroupUserModel> groupUserModels;
 
+    @JsonIgnore
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<NotificationsModel> groupNotifications;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ownerId")
     private UserModel groupOwner;
