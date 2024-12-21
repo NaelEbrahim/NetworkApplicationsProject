@@ -11,7 +11,11 @@ import NetworkApplicationsProject.Repositories.*;
 import NetworkApplicationsProject.Tools.FilesManagement;
 import NetworkApplicationsProject.Tools.HandleCurrentUserSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +23,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -245,7 +252,8 @@ public class FilesService {
     public ResponseEntity<List<FileModel>> checkInFilesOptimistically(CheckInFilesRequest fileRequest) {
         Optional<GroupModel> targetGroup = groupRepository.findById(fileRequest.getGroupId());
         if (targetGroup.isPresent()) {
-            if (HandleCurrentUserSession.getCurrentUser().getId().equals(targetGroup.get().getGroupOwner().getId())
+            UserModel currentUser = HandleCurrentUserSession.getCurrentUser();
+            if (currentUser.getId().equals(targetGroup.get().getGroupOwner().getId())
                     || checkIsCurrentUserInGroup(targetGroup.get())) {
 
                 List<FileModel> files = fileRepository.findAllById(fileRequest.getFileIds());
@@ -256,16 +264,16 @@ public class FilesService {
                             throw new CustomException("File with name : " + file.getFileName() + " is already reserved.", HttpStatus.LOCKED);
                         }
                     }
-
-                    // Reserve files (mark them as unavailable)
+                    // Reserve files
                     files.forEach(file -> {
                         file.setIsAvailable(false);
+                        file.setReserver(currentUser);
                         // handle Notification
-                        String notification = HandleCurrentUserSession.getCurrentUser().getUserName() + " has been " + ActionsEnum.CHECKED_IN + " file with name: " + file.getFileName();
+                        String notification = currentUser.getUserName() + " has been " + ActionsEnum.CHECKED_IN + " file with name: " + file.getFileName();
                         handleNotification(targetGroup.get(), notification);
                     });
-                    fileRepository.saveAll(files);  // Save all to trigger optimistic locking
-
+                    // Save all to trigger optimistic locking
+                    fileRepository.saveAll(files);
                     return new ResponseEntity<>(files, HttpStatus.OK);
                 } else {
                     throw new CustomException("One or more entered file IDs not found", HttpStatus.NOT_FOUND);
@@ -292,9 +300,9 @@ public class FilesService {
     @Transactional
     public ResponseEntity<List<FileModel>> checkOutFilesOptimistically(CheckOutFilesRequest fileRequest) throws IOException, NoSuchAlgorithmException {
         Optional<GroupModel> targetGroup = groupRepository.findById(fileRequest.getGroupId());
-
         if (targetGroup.isPresent()) {
-            if (HandleCurrentUserSession.getCurrentUser().getId().equals(targetGroup.get().getGroupOwner().getId())
+            UserModel currentUser = HandleCurrentUserSession.getCurrentUser();
+            if (currentUser.getId().equals(targetGroup.get().getGroupOwner().getId())
                     || checkIsCurrentUserInGroup(targetGroup.get())) {
 
                 List<FileModel> files = fileRepository.findAllById(fileRequest.getFileIds());
@@ -303,12 +311,17 @@ public class FilesService {
                         if (file.getIsAvailable()) {
                             throw new CustomException("One or more files are not booked yet.", HttpStatus.BAD_REQUEST);
                         }
+                        if (!file.getReserver().getId().equals(currentUser.getId())) {
+                            throw new CustomException("you are not the reserver for one or more requested files", HttpStatus.UNAUTHORIZED);
+                        }
                     }
 
                     if (fileRequest.getUpdatedFiles() != null && !fileRequest.getUpdatedFiles().isEmpty()) {
                         for (MultipartFile element : fileRequest.getUpdatedFiles()) {
                             FileModel currentFile = findElementInList(files, element);
+                            boolean isFileChanged = false;
                             if (currentFile != null && !FilesManagement.areFilesIdentical(currentFile.getFilePath(), element)) {
+                                isFileChanged = true;
                                 // Use getNextVersion to determine the next version number
                                 int newVersion = getNextVersion(targetGroup.get().getSlug(), currentFile.getFileName());
 
@@ -337,19 +350,21 @@ public class FilesService {
                                 currentFile.setRealVersion(newVersion); // Update the real version
                                 currentFile.setFilePath(updatedFile.getAbsolutePath()); // Update the path to the new file version
                                 currentFile.setLastModifiedAt(LocalDateTime.now()); // Update the modified time
-                                // handle Notification
-                                String notification = HandleCurrentUserSession.getCurrentUser().getUserName() + " has been " + ActionsEnum.CHECKED_OUT + " file with name: " + currentFile.getFileName() + " with change file content";
+                                // handle Notification if file content changed
+                                String notification = currentUser.getUserName() + " has been " + ActionsEnum.CHECKED_OUT + " file with name: " + currentFile.getFileName() + " with change file content";
                                 handleNotification(targetGroup.get(), notification);
                                 //
                             }
                             // Release the file (mark it as available)
                             Objects.requireNonNull(currentFile).setIsAvailable(true);
-                            // handle Notification
-                            String notification = HandleCurrentUserSession.getCurrentUser().getUserName() + " has been " + ActionsEnum.CHECKED_OUT + " file with name: " + currentFile.getFileName() + " withOut change file content";
-                            handleNotification(targetGroup.get(), notification);
-                            //
+                            currentFile.setReserver(null);
+                            if (!isFileChanged) {
+                                // handle Notification if file content not changed
+                                String notification = currentUser.getUserName() + " has been " + ActionsEnum.CHECKED_OUT + " file with name: " + currentFile.getFileName() + " withOut change file content";
+                                handleNotification(targetGroup.get(), notification);
+                                //
+                            }
                         }
-
                         // Save all updated files to trigger optimistic locking
                         fileRepository.saveAll(files);
                         return new ResponseEntity<>(files, HttpStatus.OK);
@@ -531,6 +546,35 @@ public class FilesService {
         }
 
         return filePaths;
+    }
+
+    public ResponseEntity<Resource> downloadFile(Integer fileId) {
+        Optional<FileModel> targetFile = fileRepository.findById(fileId);
+        if (targetFile.isPresent()) {
+            FileModel fileModel = targetFile.get();
+            String filePath = fileModel.getFilePath();
+
+            // Ensure the file exists
+            Path path = Paths.get(filePath).normalize();
+            File file = path.toFile();
+            if (!file.exists()) {
+                throw new CustomException("File not found", HttpStatus.NOT_FOUND);
+            }
+
+            // Create a resource from the file
+            Resource resource = new FileSystemResource(file);
+
+            // Set headers for download
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getName() + "\"");
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .contentType(org.springframework.http.MediaType.APPLICATION_OCTET_STREAM)
+                    .body(resource);
+        } else {
+            throw new CustomException("File not found", HttpStatus.NOT_FOUND);
+        }
     }
 
 

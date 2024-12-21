@@ -58,4 +58,9 @@ public class FileModel {
     @JoinColumn(name = "groupId")
     private GroupModel group;
 
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reserverId")
+    private UserModel reserver;
+
 }

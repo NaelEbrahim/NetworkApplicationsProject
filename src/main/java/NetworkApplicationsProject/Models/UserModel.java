@@ -70,4 +70,8 @@ public class UserModel {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TokenModel> tokenModel;
 
+    @JsonIgnore
+    @OneToMany(mappedBy = "reserver", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FileModel> userReservedFiles;
+
 }

@@ -5,6 +5,7 @@ import NetworkApplicationsProject.DTO.Requset.FilesRequests.AddFileRequest;
 import NetworkApplicationsProject.DTO.Requset.FilesRequests.CheckInFilesRequest;
 import NetworkApplicationsProject.DTO.Requset.FilesRequests.CheckOutFilesRequest;
 import NetworkApplicationsProject.Models.ActivityModel;
+import NetworkApplicationsProject.Models.FileModel;
 import NetworkApplicationsProject.Services.FilesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.query.Param;
@@ -13,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 
 @RestController
@@ -63,7 +65,6 @@ public class FilesController {
     @PostMapping("/checkOutFiles")
     public ResponseEntity<?> checkOutFiles(@ModelAttribute CheckOutFilesRequest fileRequest) {
         try {
-            //return filesService.checkOutFilesOptimistically(fileRequest);
             return filesService.checkOutFilesOptimistically(fileRequest);
         } catch (CustomException exception) {
             return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
@@ -75,7 +76,7 @@ public class FilesController {
     @GetMapping("/getUserFilesInGroup")
     public ResponseEntity<?> getUploadedUserFilesInGroup(@Param("groupId") Integer groupId) {
         try {
-            return new ResponseEntity<>(filesService.getUploadUserFiles(groupId), HttpStatus.OK );
+            return new ResponseEntity<>(filesService.getUploadUserFiles(groupId), HttpStatus.OK);
         } catch (CustomException exception) {
             return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
         }
@@ -84,13 +85,14 @@ public class FilesController {
     // Get all logs for a file in a specific group
     @GetMapping("/logs/ByFile")
     public ResponseEntity<?> getLogsByFileId(
-            @Param("fileId")  Integer fileId, @Param("groupId") Integer groupId) {
+            @Param("fileId") Integer fileId, @Param("groupId") Integer groupId) {
         try {
-            return new ResponseEntity<>(filesService.getLogsByFile(fileId,groupId), HttpStatus.OK );
+            return new ResponseEntity<>(filesService.getLogsByFile(fileId, groupId), HttpStatus.OK);
         } catch (CustomException exception) {
             return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
         }
     }
+
     // Get all logs for a user in a specific group
     @GetMapping("/logs/ByUser")
     public ResponseEntity<?> getLogsByUserAndGroup(@Param("groupId") Integer groupId) {
@@ -123,7 +125,14 @@ public class FilesController {
         }
     }
 
-
-
+    @GetMapping("/downloadFile")
+    @CrossOrigin(exposedHeaders = "Content-Disposition")
+    public ResponseEntity<?> downloadFile(@RequestParam("fileId") Integer fileId) {
+        try {
+            return filesService.downloadFile(fileId);
+        } catch (CustomException exception) {
+            return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
+        }
+    }
 
 }

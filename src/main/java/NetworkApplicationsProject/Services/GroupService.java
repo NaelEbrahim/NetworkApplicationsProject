@@ -3,6 +3,8 @@ package NetworkApplicationsProject.Services;
 import NetworkApplicationsProject.CustomExceptions.CustomException;
 import NetworkApplicationsProject.DTO.Requset.GroupRequest;
 import NetworkApplicationsProject.DTO.Response.GroupResponse;
+import NetworkApplicationsProject.DTO.Response.UserFilesInAllGroups;
+import NetworkApplicationsProject.Enums.GroupTypeEnum;
 import NetworkApplicationsProject.Enums.RolesEnum;
 import NetworkApplicationsProject.Models.GroupModel;
 import NetworkApplicationsProject.Models.GroupUserModel;
@@ -14,11 +16,14 @@ import NetworkApplicationsProject.Tools.FilesManagement;
 import NetworkApplicationsProject.Tools.HandleCurrentUserSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -33,6 +38,9 @@ public class GroupService {
 
     @Autowired
     private GroupUserRepository groupUserRepository;
+
+    @Autowired
+    private FilesService filesService;
 
     public GroupModel createGroup(GroupRequest groupRequest) {
         // Validate request
@@ -64,7 +72,6 @@ public class GroupService {
     }
 
 
-
     public String deleteGroup(int groupId) {
         Optional<GroupModel> targetGroup = groupRepository.findById(groupId);
         if (targetGroup.isPresent()) {
@@ -93,7 +100,7 @@ public class GroupService {
         if (groupRequest.getGroupName() != null && !groupRequest.getGroupName().isBlank()) {
             group.setName(groupRequest.getGroupName());
         }
-        if (groupRequest.getGroupType() != null && !groupRequest.getGroupType().isBlank()) {
+        if (groupRequest.getGroupType() != null && groupRequest.getGroupType() != null) {
             group.setType(groupRequest.getGroupType());
         }
 
@@ -197,4 +204,43 @@ public class GroupService {
 
         return groupResponse;
     }
+
+    public List<GroupUserModel> getAllUserGroups() {
+        List<GroupUserModel> allUserGroups = groupUserRepository.findByUserId(HandleCurrentUserSession.getCurrentUser().getId());
+        if (!allUserGroups.isEmpty()) {
+            return allUserGroups;
+        } else {
+            throw new CustomException("you have no any group yet", HttpStatus.NO_CONTENT);
+        }
+    }
+
+    public ResponseEntity<List<GroupModel>> getAllPublicGroups() {
+        List<GroupModel> allPublicGroups = groupRepository.findByType(GroupTypeEnum.PUBLIC);
+        if (!allPublicGroups.isEmpty()) {
+            return new ResponseEntity<>(allPublicGroups, HttpStatus.OK);
+        } else {
+            throw new CustomException("no public groups yet", HttpStatus.NO_CONTENT);
+        }
+    }
+
+    public List<UserFilesInAllGroups> getUserFilesInAllGroups() {
+        List<GroupUserModel> userGroups = getAllUserGroups();
+        if (!userGroups.isEmpty()) {
+            List<UserFilesInAllGroups> allUserFiles = new ArrayList<>();
+            for (GroupUserModel group : userGroups) {
+                List<Map<String, Object>> userFilesInGroup = filesService.getUploadUserFiles(group.getId());
+                if (!userFilesInGroup.isEmpty()) {
+                    allUserFiles.add(new UserFilesInAllGroups(userFilesInGroup, group.getGroupModel()));
+                }
+            }
+            if (!allUserFiles.isEmpty()) {
+                return allUserFiles;
+            } else {
+                throw new CustomException("no files yet", HttpStatus.NO_CONTENT);
+            }
+        } else {
+            throw new CustomException("you have no any groups yet", HttpStatus.NO_CONTENT);
+        }
+    }
+
 }

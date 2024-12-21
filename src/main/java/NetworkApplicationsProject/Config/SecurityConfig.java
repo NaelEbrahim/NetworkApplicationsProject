@@ -21,7 +21,7 @@ public class SecurityConfig {
                 .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("api/auth/register","api/auth/login", "/swagger-ui/**",
-                                "/v3/api-docs/**","/ws/**","/index.html")
+                                "/v3/api-docs/**","/ws/**","/testNotification.html","api/files/downloadFile")
                         .permitAll()
                         .anyRequest()
                         .authenticated());

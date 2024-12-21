@@ -42,14 +42,9 @@ public class FilesAspect {
 
         logger.info("Around (Before): Method {} started with arguments: {}", methodName, args);
 
-        try {
             long startTime = System.currentTimeMillis();
             result = joinPoint.proceed(); // Proceed to the target method
             elapsedTime = System.currentTimeMillis() - startTime;
-
-        } catch (Exception exception) {
-            System.out.println(exception.getMessage());
-        }
 
         logger.info("Around (After): Method {} completed in {} ms", methodName, elapsedTime);
 
@@ -64,16 +59,18 @@ public class FilesAspect {
     }
 
     private void storeTracingInDataBase(ResponseEntity<List<FileModel>> executionResult, String tracingType) {
-        List<FileModel> fileModels = executionResult.getBody();
-        if (fileModels != null && !fileModels.isEmpty()) {
-            for (FileModel temp : fileModels) {
-                if (temp != null) {
-                    ActivityModel activityModel = new ActivityModel();
-                    activityModel.setFileModel(temp);
-                    activityModel.setActivityType(tracingType);
-                    activityModel.setUserModel(HandleCurrentUserSession.getCurrentUser());
-                    activityModel.setActivityDate(LocalDateTime.now());
-                    activityRepository.save(activityModel);
+        if (executionResult != null) {
+            List<FileModel> fileModels = executionResult.getBody();
+            if (fileModels != null && !fileModels.isEmpty()) {
+                for (FileModel temp : fileModels) {
+                    if (temp != null) {
+                        ActivityModel activityModel = new ActivityModel();
+                        activityModel.setFileModel(temp);
+                        activityModel.setActivityType(tracingType);
+                        activityModel.setUserModel(HandleCurrentUserSession.getCurrentUser());
+                        activityModel.setActivityDate(LocalDateTime.now());
+                        activityRepository.save(activityModel);
+                    }
                 }
             }
         }

@@ -51,6 +51,7 @@ public class GroupsController {
             return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
         }
     }
+
     @PostMapping("/removeUser")
     public ResponseEntity<?> removeUser(@ModelAttribute GroupRequest groupRequest) {
         try {
@@ -65,6 +66,33 @@ public class GroupsController {
             @PathVariable int groupId) { // Get the email of the requesting user from the request or session
         try {
             return new ResponseEntity<>(groupService.getGroupWithMembers(groupId), HttpStatus.OK);
+        } catch (CustomException exception) {
+            return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
+        }
+    }
+
+    @GetMapping("/getAllUserGroups")
+    public ResponseEntity<?> getUserGroups() {
+        try {
+            return new ResponseEntity<>(groupService.getAllUserGroups(), HttpStatus.OK);
+        } catch (CustomException exception) {
+            return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
+        }
+    }
+
+    @GetMapping("/getAllPublicGroups")
+    public ResponseEntity<?> getPublicGroups() {
+        try {
+            return groupService.getAllPublicGroups();
+        } catch (CustomException exception) {
+            return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
+        }
+    }
+
+    @GetMapping("getUserFilesInAllGroups")
+    public ResponseEntity<?> getUserFilesInAllGroups() {
+        try {
+            return new ResponseEntity<>(groupService.getUserFilesInAllGroups(), HttpStatus.OK);
         } catch (CustomException exception) {
             return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
         }

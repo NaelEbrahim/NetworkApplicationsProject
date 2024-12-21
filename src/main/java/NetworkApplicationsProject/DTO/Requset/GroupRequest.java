@@ -1,5 +1,6 @@
 package NetworkApplicationsProject.DTO.Requset;
 
+import NetworkApplicationsProject.Enums.GroupTypeEnum;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,7 +14,7 @@ public class GroupRequest {
 
     private String groupSlug;
 
-    private String groupType;
+    private GroupTypeEnum groupType;
 
     private String userName;
 

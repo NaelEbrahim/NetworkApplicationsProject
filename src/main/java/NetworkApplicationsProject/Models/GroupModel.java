@@ -1,7 +1,9 @@
 package NetworkApplicationsProject.Models;
 
+import NetworkApplicationsProject.Enums.GroupTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,6 +14,7 @@ import java.util.List;
 @Entity
 @Setter
 @Getter
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class GroupModel {
 
     @Id
@@ -23,7 +26,7 @@ public class GroupModel {
     @Column(unique = true)
     private String slug;
 
-    private String type;
+    private GroupTypeEnum type;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;

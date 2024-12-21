@@ -18,7 +18,7 @@
     const groupId = "1"; // Replace with the actual group ID
 
     // Initialize the SockJS connection
-    const socket = new SockJS("http://localhost:8080/ws");
+    const socket = new SockJS("http://localhost:8081/ws");
     const stompClient = Stomp.over(socket);
 
     // Function to append notifications to the DOM
