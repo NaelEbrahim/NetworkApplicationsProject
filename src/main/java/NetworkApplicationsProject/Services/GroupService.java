@@ -6,9 +6,11 @@ import NetworkApplicationsProject.DTO.Response.GroupResponse;
 import NetworkApplicationsProject.DTO.Response.UserFilesInAllGroups;
 import NetworkApplicationsProject.Enums.GroupTypeEnum;
 import NetworkApplicationsProject.Enums.RolesEnum;
+import NetworkApplicationsProject.Models.FileModel;
 import NetworkApplicationsProject.Models.GroupModel;
 import NetworkApplicationsProject.Models.GroupUserModel;
 import NetworkApplicationsProject.Models.UserModel;
+import NetworkApplicationsProject.Repositories.FileRepository;
 import NetworkApplicationsProject.Repositories.GroupRepository;
 import NetworkApplicationsProject.Repositories.GroupUserRepository;
 import NetworkApplicationsProject.Repositories.UserRepository;
@@ -41,6 +43,8 @@ public class GroupService {
 
     @Autowired
     private FilesService filesService;
+    @Autowired
+    private FileRepository fileRepository;
 
     public GroupModel createGroup(GroupRequest groupRequest) {
         // Validate request
@@ -241,6 +245,79 @@ public class GroupService {
         } else {
             throw new CustomException("you have no any groups yet", HttpStatus.NO_CONTENT);
         }
+    }
+
+    public ResponseEntity<List<GroupModel>> AllGroups() {
+        UserModel currentUser = HandleCurrentUserSession.getCurrentUser();
+        if (currentUser.getRole().equals(RolesEnum.SUPER_ADMIN)
+        ) {
+            List<GroupModel> Groups = groupRepository.findAll();
+            if (!Groups.isEmpty()) {
+                return new ResponseEntity<>(Groups, HttpStatus.OK);
+            } else {
+                throw new CustomException("no groups yet", HttpStatus.NO_CONTENT);
+            }
+        }
+        else {
+            throw new CustomException("you don't have permissions to access to this", HttpStatus.UNAUTHORIZED);}
+    }
+
+    private boolean checkIsCurrentUserInGroup(GroupModel targetGroup) {
+        //find Groups For target User
+        List<GroupUserModel> currentUserGroups = groupUserRepository.findByUserId(HandleCurrentUserSession.getCurrentUser().getId());
+        for (GroupUserModel element : currentUserGroups) {
+            if (element.getGroupModel().getId().equals(targetGroup.getId())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public ResponseEntity<List<UserModel>> AllUsers() {
+        UserModel currentUser = HandleCurrentUserSession.getCurrentUser();
+        if (currentUser.getRole().equals(RolesEnum.SUPER_ADMIN)
+        ) {
+            List<UserModel> Users = userRepository.findAll();
+            if (!Users.isEmpty()) {
+                return new ResponseEntity<>(Users, HttpStatus.OK);
+            } else {
+                throw new CustomException("no groups yet", HttpStatus.NO_CONTENT);
+            }
+        }
+        else {
+            throw new CustomException("you don't have permissions to access to this", HttpStatus.UNAUTHORIZED);}
+    }
+
+    public ResponseEntity<?> getGroupMembersOnly(int groupId) {
+        GroupModel group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new CustomException("Group not found", HttpStatus.NOT_FOUND));
+
+        boolean isAdmin = HandleCurrentUserSession.getCurrentUserRole().equals(RolesEnum.SUPER_ADMIN);
+        boolean isGroupOwner = group.getGroupOwner().getId().equals(HandleCurrentUserSession.getCurrentUser().getId());
+
+        if (!isAdmin && !isGroupOwner && !checkIsCurrentUserInGroup(group)) {
+            throw new CustomException("Unauthorized access", HttpStatus.UNAUTHORIZED);
+        }
+
+        List<UserModel> members = groupUserRepository.findByGroupModel(group).stream()
+                .map(GroupUserModel::getUser) // Map GroupUserModel to UserModel
+                .collect(Collectors.toList());
+        return new ResponseEntity<>(members, HttpStatus.OK);
+    }
+
+    public ResponseEntity<?> getGroupFilesOnly(int groupId) {
+        GroupModel group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new CustomException("Group not found", HttpStatus.NOT_FOUND));
+
+        boolean isAdmin = HandleCurrentUserSession.getCurrentUserRole().equals(RolesEnum.SUPER_ADMIN);
+        boolean isGroupOwner = group.getGroupOwner().getId().equals(HandleCurrentUserSession.getCurrentUser().getId());
+
+        if (!isAdmin && !isGroupOwner && !checkIsCurrentUserInGroup(group)) {
+            throw new CustomException("Unauthorized access", HttpStatus.UNAUTHORIZED);
+        }
+
+        List<FileModel> files = fileRepository.findByGroupId(groupId);
+        return new ResponseEntity<>(files, HttpStatus.OK);
     }
 
 }
