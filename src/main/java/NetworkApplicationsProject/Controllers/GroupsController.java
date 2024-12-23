@@ -89,7 +89,7 @@ public class GroupsController {
         }
     }
 
-    @GetMapping("getUserFilesInAllGroups")
+    @GetMapping("/getUserFilesInAllGroups")
     public ResponseEntity<?> getUserFilesInAllGroups() {
         try {
             return new ResponseEntity<>(groupService.getUserFilesInAllGroups(), HttpStatus.OK);
@@ -97,6 +97,45 @@ public class GroupsController {
             return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
         }
     }
+    //For Admin
+    @GetMapping("/getAllGroups")
+    public ResponseEntity<?> getAllGroups() {
+        try {
+            return new ResponseEntity<>(groupService.AllGroups(), HttpStatus.OK);
+        } catch (CustomException exception) {
+            return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
+        }
+    }
+
+    @GetMapping("/getAllUsers")
+    public ResponseEntity<?> getAllUsers() {
+        try {
+            return new ResponseEntity<>(groupService.AllUsers(), HttpStatus.OK);
+        } catch (CustomException exception) {
+            return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
+        }
+    }
+
+    @GetMapping("/{groupId}/members")
+    public ResponseEntity<?> getGroupMembersOnly(
+            @PathVariable int groupId) { // Get the email of the requesting user from the request or session
+        try {
+            return new ResponseEntity<>(groupService.getGroupMembersOnly(groupId), HttpStatus.OK);
+        } catch (CustomException exception) {
+            return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
+        }
+    }
+
+    @GetMapping("/{groupId}/files")
+    public ResponseEntity<?> getGroupFilesOnly(
+            @PathVariable int groupId) { // Get the email of the requesting user from the request or session
+        try {
+            return new ResponseEntity<>(groupService.getGroupFilesOnly(groupId), HttpStatus.OK);
+        } catch (CustomException exception) {
+            return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
+        }
+    }
+
 
 
 }
