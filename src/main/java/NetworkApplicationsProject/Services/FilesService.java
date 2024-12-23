@@ -76,12 +76,6 @@ public class FilesService {
             }
         }
 
-        // Validate file content type
-        String contentType = fileRequest.getContentType();
-        if (contentType == null || contentType.isEmpty()) {
-            throw new CustomException("File content type must not be null or empty", HttpStatus.BAD_REQUEST);
-        }
-
         String groupSlug = targetGroup.get().getSlug();
         String fileName = fileRequest.getFile().getOriginalFilename();
 
@@ -112,7 +106,7 @@ public class FilesService {
         newFile.setGroup(targetGroup.get());
         newFile.setCreatedAt(LocalDateTime.now());
         newFile.setFileName(fileName);
-        newFile.setContentType(contentType);
+        newFile.setContentType(fileRequest.getContentType());
         newFile.setOwner(HandleCurrentUserSession.getCurrentUser());
         newFile.setRealVersion(1);  // Set version to 1 for the original file
         fileRepository.save(newFile);
