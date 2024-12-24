@@ -13,7 +13,9 @@ public class TokenModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    private String token;
+    private String serverToken;
+
+    private String FCM_Token;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "userId")

@@ -19,7 +19,9 @@ public class NotificationsModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    private String content;
+    private String title;
+
+    private String body;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime date;

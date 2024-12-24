@@ -43,7 +43,7 @@ public class JWTRequestFilter extends OncePerRequestFilter {
                 String userEmail = jwtService.getEmail(token);
                 if (userEmail != null) {
                     Optional<UserModel> currentUser = userRepository.findByEmail(userEmail);
-                    var validToken = tokenRepository.findByToken(token);
+                    var validToken = tokenRepository.findByServerToken(token);
                     if (currentUser.isPresent() && validToken.isPresent()) {// && !jwtService.isTokenExpired(token)
                         UserModel user = currentUser.get();
                         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user, null, new ArrayList<>());

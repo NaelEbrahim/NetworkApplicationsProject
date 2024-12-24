@@ -51,6 +51,9 @@ public class FilesService {
     @Autowired
     NotificationsRepository notificationsRepository;
 
+    @Autowired
+    TokenRepository tokenRepository;
+
 
     public String addFile(AddFileRequest fileRequest) {
         if (fileRequest.getGroupId() == null) {
@@ -263,8 +266,9 @@ public class FilesService {
                         file.setIsAvailable(false);
                         file.setReserver(currentUser);
                         // handle Notification
-                        String notification = currentUser.getUserName() + " has been " + ActionsEnum.CHECKED_IN + " file with name: " + file.getFileName();
-                        handleNotification(targetGroup.get(), notification);
+                        String notificationTitle = "new Notification in group " + targetGroup.get().getName();
+                        String notificationBody = currentUser.getUserName() + " has been " + ActionsEnum.CHECKED_IN + " file with name: " + file.getFileName();
+                        handleNotification(targetGroup.get(), notificationBody, notificationTitle);
                     });
                     // Save all to trigger optimistic locking
                     fileRepository.saveAll(files);
@@ -311,6 +315,7 @@ public class FilesService {
                     }
 
                     if (fileRequest.getUpdatedFiles() != null && !fileRequest.getUpdatedFiles().isEmpty()) {
+                        String notificationTitle = "new Notification in group " + targetGroup.get().getName();
                         for (MultipartFile element : fileRequest.getUpdatedFiles()) {
                             FileModel currentFile = findElementInList(files, element);
                             boolean isFileChanged = false;
@@ -344,19 +349,18 @@ public class FilesService {
                                 currentFile.setRealVersion(newVersion); // Update the real version
                                 currentFile.setFilePath(updatedFile.getAbsolutePath()); // Update the path to the new file version
                                 currentFile.setLastModifiedAt(LocalDateTime.now()); // Update the modified time
+
                                 // handle Notification if file content changed
-                                String notification = currentUser.getUserName() + " has been " + ActionsEnum.CHECKED_OUT + " file with name: " + currentFile.getFileName() + " with change file content";
-                                handleNotification(targetGroup.get(), notification);
-                                //
+                                String notificationBody = currentUser.getUserName() + " has been " + ActionsEnum.CHECKED_OUT + " file with name: " + currentFile.getFileName() + " with change file content";
+                                handleNotification(targetGroup.get(), notificationBody, notificationTitle);
                             }
                             // Release the file (mark it as available)
                             Objects.requireNonNull(currentFile).setIsAvailable(true);
                             currentFile.setReserver(null);
                             if (!isFileChanged) {
                                 // handle Notification if file content not changed
-                                String notification = currentUser.getUserName() + " has been " + ActionsEnum.CHECKED_OUT + " file with name: " + currentFile.getFileName() + " withOut change file content";
-                                handleNotification(targetGroup.get(), notification);
-                                //
+                                String notificationBody = currentUser.getUserName() + " has been " + ActionsEnum.CHECKED_OUT + " file with name: " + currentFile.getFileName() + " withOut change file content";
+                                handleNotification(targetGroup.get(), notificationBody, notificationTitle);
                             }
                         }
                         // Save all updated files to trigger optimistic locking
@@ -385,11 +389,19 @@ public class FilesService {
         return null;
     }
 
-    private void handleNotification(GroupModel groupModel, String notification) {
-        // send Notification
-        notificationService.sendNotification(groupModel.getId().toString(), notification);
-        // store in DataBase
-        notificationsRepository.save(NotificationsModel.builder().group(groupModel).content(notification).date(LocalDateTime.now()).build());
+    private void handleNotification(GroupModel groupModel, String body, String title) {
+        // get all user tokens
+        List<TokenModel> userTokens = tokenRepository.findByUserId(HandleCurrentUserSession.getCurrentUser().getId());
+        for (TokenModel token : userTokens) {
+            if (token.getFCM_Token() != null) {
+                // if user have multiple FCM token
+                String fcmToken = token.getFCM_Token();
+                // send Notification
+                notificationService.sendNotification(fcmToken, title, body);
+                // store in DataBase
+                notificationsRepository.save(NotificationsModel.builder().group(groupModel).title(title).body(body).date(LocalDateTime.now()).build());
+            }
+        }
     }
 
     public List<Map<String, Object>> getUploadUserFiles(Integer groupId) {

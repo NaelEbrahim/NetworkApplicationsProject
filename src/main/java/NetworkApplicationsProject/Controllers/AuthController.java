@@ -63,4 +63,13 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/saveFcmToken")
+    public ResponseEntity<?> saveFcmToken(@RequestParam("fcm_token") String fcmToken) {
+        try {
+            return new ResponseEntity<>(userService.saveFcmToken(fcmToken), HttpStatus.OK);
+        } catch (CustomException exception) {
+            return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
+        }
+    }
+
 }

@@ -17,7 +17,7 @@ public class TokenService {
     public void saveUserToken(UserModel user, String generatedToken) {
         TokenModel tokenModel = new TokenModel();
         tokenModel.setUser(user);
-        tokenModel.setToken(generatedToken);
+        tokenModel.setServerToken(generatedToken);
         tokenRepository.save(tokenModel);
     }
 

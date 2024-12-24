@@ -2,23 +2,27 @@ package NetworkApplicationsProject.Services;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.Message;
 
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class NotificationService {
 
-    private final SimpMessagingTemplate messagingTemplate;
-
-    public void sendNotification(String groupId, String notification) {
-        log.info("Sending WS notification to {} with payload {}", groupId, notification);
-        messagingTemplate.convertAndSendToUser("group-" + groupId, "/notification", notification);
+    public void sendNotification(String fcmToken, String title, String body) {
         try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            Message message = Message.builder()
+                    .putData("title", title)
+                    .putData("body", body)
+                    .setToken(fcmToken)
+                    .build();
+
+            FirebaseMessaging.getInstance().send(message);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
     }
 

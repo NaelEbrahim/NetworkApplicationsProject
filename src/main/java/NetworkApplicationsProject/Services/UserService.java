@@ -6,6 +6,7 @@ import NetworkApplicationsProject.DTO.Requset.AuthRequests.RegisterRequest;
 import NetworkApplicationsProject.DTO.Requset.ProfileRequest;
 import NetworkApplicationsProject.DTO.Response.AuthResponse;
 import NetworkApplicationsProject.Enums.RolesEnum;
+import NetworkApplicationsProject.Models.TokenModel;
 import NetworkApplicationsProject.Models.UserModel;
 import NetworkApplicationsProject.Repositories.TokenRepository;
 import NetworkApplicationsProject.Repositories.UserRepository;
@@ -104,7 +105,6 @@ public class UserService {
         return "Logout Successfully";
     }
 
-
     public Object profile() {
         return HandleCurrentUserSession.getCurrentUser();
     }
@@ -126,4 +126,18 @@ public class UserService {
         }
         return user;
     }
+
+    public String saveFcmToken(String fcmToken) {
+        if (fcmToken != null && !fcmToken.isBlank()) {
+            TokenModel newToken = new TokenModel();
+            newToken.setUser(HandleCurrentUserSession.getCurrentUser());
+            newToken.setFCM_Token(fcmToken);
+            // save in DB
+            tokenRepository.save(newToken);
+            return "FCM token saved successfully";
+        } else {
+            throw new CustomException("token is not valid", HttpStatus.BAD_REQUEST);
+        }
+    }
+
 }
