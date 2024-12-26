@@ -8,10 +8,14 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface TokenRepository extends JpaRepository<TokenModel,Integer> {
+public interface TokenRepository extends JpaRepository<TokenModel, Integer> {
 
-    Optional<TokenModel> findByServerToken(String token);
+    Optional<TokenModel> findByAccessToken(String token);
+
+    Optional<TokenModel> findByRefreshToken(String token);
 
     List<TokenModel> findByUserId(Integer userId);
+
+    void deleteByRefreshToken(String refreshToken);
 
 }

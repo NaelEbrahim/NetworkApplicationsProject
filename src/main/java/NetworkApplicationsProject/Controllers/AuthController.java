@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("api/auth")
 public class AuthController {
-    //test
 
     @Autowired
     private UserService userService;
@@ -67,6 +66,15 @@ public class AuthController {
     public ResponseEntity<?> saveFcmToken(@RequestParam("fcm_token") String fcmToken) {
         try {
             return new ResponseEntity<>(userService.saveFcmToken(fcmToken), HttpStatus.OK);
+        } catch (CustomException exception) {
+            return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
+        }
+    }
+
+    @PostMapping("/refreshAccessToken")
+    public ResponseEntity<?> refreshAccessToken(@RequestParam("refreshToken") String refreshToken) {
+        try {
+            return new ResponseEntity<>(userService.refreshAccessToken(refreshToken), HttpStatus.OK);
         } catch (CustomException exception) {
             return ResponseEntity.status(exception.getStatusCode()).body(exception.getMessage());
         }

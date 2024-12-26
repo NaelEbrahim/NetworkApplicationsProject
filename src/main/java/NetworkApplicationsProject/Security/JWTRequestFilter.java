@@ -4,6 +4,7 @@ import NetworkApplicationsProject.Models.UserModel;
 import NetworkApplicationsProject.Repositories.TokenRepository;
 import NetworkApplicationsProject.Repositories.UserRepository;
 import NetworkApplicationsProject.Services.SecurityServices.JWTService;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -43,17 +44,28 @@ public class JWTRequestFilter extends OncePerRequestFilter {
                 String userEmail = jwtService.getEmail(token);
                 if (userEmail != null) {
                     Optional<UserModel> currentUser = userRepository.findByEmail(userEmail);
-                    var validToken = tokenRepository.findByServerToken(token);
-                    if (currentUser.isPresent() && validToken.isPresent()) {// && !jwtService.isTokenExpired(token)
+                    var validToken = tokenRepository.findByAccessToken(token);
+                    if (currentUser.isPresent() && validToken.isPresent() && !jwtService.isTokenExpired(token)) {
                         UserModel user = currentUser.get();
                         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user, null, new ArrayList<>());
                         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                         SecurityContextHolder.getContext().setAuthentication(authentication);
                     }
                 }
+            } catch (ExpiredJwtException ex) {
+                // Token is expired
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"error\":\"Access Token expired\", \"message\":\"Please refresh your token.\"}");
+                response.getWriter().flush();
+                return;
             } catch (Exception ex) {
-                System.out.println(ex.getMessage());
-                //throw new CustomException("User Not Found", HttpStatus.FORBIDDEN);
+                // Handle other exceptions
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"error\":\"Invalid token\", \"message\":\"Access denied.\"}");
+                response.getWriter().flush();
+                return;
             }
         }
         filterChain.doFilter(request, response);

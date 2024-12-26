@@ -22,6 +22,8 @@ import org.springframework.security.web.authentication.logout.SecurityContextLog
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -64,11 +66,15 @@ public class UserService {
             UserModel savedUser = userRepository.save(userModel);
             // Generate JWT Token & Save it
             String generatedToken = jwtService.generateJWT(savedUser);
-            tokenService.saveUserToken(savedUser, generatedToken);
+            // Generate Refresh Token
+            TokenModel refreshToken = tokenService.createRefreshToken(savedUser);
+            // save tokens in DB
+            tokenService.saveUserToken(savedUser, generatedToken, refreshToken);
             // return Response Object
             AuthResponse authResponse = new AuthResponse();
             authResponse.setUserModel(savedUser);
-            authResponse.setToken(generatedToken);
+            authResponse.setAccessToken(generatedToken);
+            authResponse.setRefreshToken(refreshToken.getRefreshToken());
             return authResponse;
         }
     }
@@ -78,14 +84,18 @@ public class UserService {
         if (currentUser.isPresent()) {
             UserModel user = currentUser.get();
             if (encryptionService.verifyPassword(authRequest.getPassword(), user.getPassword())) {
-                // Generate JWT Token - Revoke Old one & Save the new
+                // Generate JWT Access Token - Revoke Old one & Save the new
                 String generatedToken = jwtService.generateJWT(user);
                 tokenService.revokeOldUserTokens(user);
-                tokenService.saveUserToken(user, generatedToken);
+                // Generate Refresh Token
+                TokenModel refreshToken = tokenService.createRefreshToken(user);
+                // save tokens in DB
+                tokenService.saveUserToken(user, generatedToken, refreshToken);
                 // return Response Object
                 AuthResponse authResponse = new AuthResponse();
                 authResponse.setUserModel(user);
-                authResponse.setToken(generatedToken);
+                authResponse.setAccessToken(generatedToken);
+                authResponse.setRefreshToken(refreshToken.getRefreshToken());
                 return authResponse;
             } else {
                 throw new CustomException("wrong password", HttpStatus.BAD_REQUEST);
@@ -139,5 +149,23 @@ public class UserService {
             throw new CustomException("token is not valid", HttpStatus.BAD_REQUEST);
         }
     }
+
+    public Map<String,String> refreshAccessToken(String refreshToken) {
+        if (tokenService.validateRefreshToken(refreshToken)) {
+            TokenModel updatedUserToken = tokenRepository.findByRefreshToken(refreshToken).get();
+            // generate new Access Token
+            String newAccessToken = jwtService.generateJWT(updatedUserToken.getUser());
+            // update access token in DB
+            updatedUserToken.setAccessToken(newAccessToken);
+            tokenRepository.save(updatedUserToken);
+            // return response
+            Map<String,String> response = new HashMap<>();
+            response.put("accessToken: ",newAccessToken);
+            return response;
+        } else {
+            throw new CustomException("Invalid or expired refresh token.", HttpStatus.UNAUTHORIZED);
+        }
+    }
+
 
 }

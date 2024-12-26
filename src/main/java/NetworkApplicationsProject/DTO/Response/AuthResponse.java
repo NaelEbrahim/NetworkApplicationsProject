@@ -9,8 +9,10 @@ import lombok.Setter;
 @Getter
 public class AuthResponse {
 
-    UserModel userModel;
+    private UserModel userModel;
 
-    String token;
+    private String accessToken;
+
+    private String refreshToken;
 
 }
