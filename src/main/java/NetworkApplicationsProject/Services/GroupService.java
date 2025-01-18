@@ -274,18 +274,18 @@ public class GroupService {
     }
 
     public ResponseEntity<List<UserModel>> AllUsers() {
-        UserModel currentUser = HandleCurrentUserSession.getCurrentUser();
-        if (currentUser.getRole().equals(RolesEnum.SUPER_ADMIN)
-        ) {
-            List<UserModel> Users = userRepository.findAll();
-            if (!Users.isEmpty()) {
-                return new ResponseEntity<>(Users, HttpStatus.OK);
-            } else {
-                throw new CustomException("no groups yet", HttpStatus.NO_CONTENT);
-            }
+        // UserModel currentUser = HandleCurrentUserSession.getCurrentUser();
+        // if (currentUser.getRole().equals(RolesEnum.SUPER_ADMIN)
+        // ) {
+        List<UserModel> Users = userRepository.findAll();
+        if (!Users.isEmpty()) {
+            return new ResponseEntity<>(Users, HttpStatus.OK);
+        } else {
+            throw new CustomException("no groups yet", HttpStatus.NO_CONTENT);
         }
-        else {
-            throw new CustomException("you don't have permissions to access to this", HttpStatus.UNAUTHORIZED);}
+        // }
+        // else {
+        //     throw new CustomException("you don't have permissions to access to this", HttpStatus.UNAUTHORIZED);}
     }
 
     public ResponseEntity<?> getGroupMembersOnly(int groupId) {
