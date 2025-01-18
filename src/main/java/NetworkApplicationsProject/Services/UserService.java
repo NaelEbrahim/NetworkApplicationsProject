@@ -123,17 +123,13 @@ public class UserService {
         UserModel user = HandleCurrentUserSession.getCurrentUser();
         if (!profileRequest.getFirstName().isEmpty()) {
             user.setFirstName(profileRequest.getFirstName());
-            user.setUserName(profileRequest.getUsername());
-            userRepository.save(user);
         }
+
         if (!profileRequest.getLastName().isEmpty()) {
             user.setLastName(profileRequest.getLastName());
-            userRepository.save(user);
         }
-        if (!profileRequest.getUsername().isEmpty()) {
-            user.setUserName(profileRequest.getUsername());
-            userRepository.save(user);
-        }
+        
+        userRepository.save(user);
         return user;
     }
 
