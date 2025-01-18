@@ -160,7 +160,7 @@ public class UserService {
             tokenRepository.save(updatedUserToken);
             // return response
             Map<String,String> response = new HashMap<>();
-            response.put("accessToken: ",newAccessToken);
+            response.put("accessToken", newAccessToken);
             return response;
         } else {
             throw new CustomException("Invalid or expired refresh token.", HttpStatus.UNAUTHORIZED);
