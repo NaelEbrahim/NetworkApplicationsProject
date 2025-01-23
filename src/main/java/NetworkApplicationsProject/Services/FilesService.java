@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.File;
 import java.io.IOException;
@@ -318,6 +319,9 @@ public class FilesService {
                         String notificationTitle = "new Notification in group " + targetGroup.get().getName();
                         for (MultipartFile element : fileRequest.getUpdatedFiles()) {
                             FileModel currentFile = findElementInList(files, element);
+                            if (currentFile == null) {
+                                throw new CustomException( "File name must be exact to the original file name", HttpStatus.BAD_REQUEST);
+                            }
                             boolean isFileChanged = false;
                             if (currentFile != null && !FilesManagement.areFilesIdentical(currentFile.getFilePath(), element)) {
                                 isFileChanged = true;
@@ -367,7 +371,16 @@ public class FilesService {
                         fileRepository.saveAll(files);
                         return new ResponseEntity<>(files, HttpStatus.OK);
                     } else {
-                        throw new CustomException("Please upload valid files", HttpStatus.BAD_REQUEST);
+                        String notificationTitle = "new Notification in group " + targetGroup.get().getName();
+                        for (FileModel file : files) {
+                            file.setIsAvailable(true);
+                            String notificationBody = currentUser.getUserName() + " has been " + ActionsEnum.CHECKED_OUT + " file with name: " + file.getFileName() + " with change file content";
+                            handleNotification(targetGroup.get(), notificationBody, notificationTitle);
+                        }
+
+                        fileRepository.saveAll(files);
+                        return new ResponseEntity<>(files, HttpStatus.OK);
+                        // throw new CustomException("Please upload valid files", HttpStatus.BAD_REQUEST);
                     }
                 } else {
                     throw new CustomException("One or more entered file IDs not found", HttpStatus.NOT_FOUND);
